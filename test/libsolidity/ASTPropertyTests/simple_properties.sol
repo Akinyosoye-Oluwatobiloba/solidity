@@ -7,6 +7,6 @@ contract C {
     }
 }
 // ----
-// TestContractC: x
+// TestContractC: C
 // TestStateVarX: true
 // TestFunctionF: public

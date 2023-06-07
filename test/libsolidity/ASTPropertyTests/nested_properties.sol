@@ -1,5 +1,5 @@
 contract C {
-    function f() public view {
+    function f() public pure {
         /// TestCase1: condition.operator
         for(uint i = 0; i < 42; ++i) {
         }
@@ -7,7 +7,7 @@ contract C {
         for(uint i = 1; i < 42; i = i * 2) {
          }
          /// TestCase3: loopExpression.expression.subExpression.name
-         for(int i = 0; i < x; i++) {
+         for(uint i = 0; i < 42; i++) {
          }
      }
 }
