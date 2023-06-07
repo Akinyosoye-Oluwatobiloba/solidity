@@ -35,80 +35,6 @@ using namespace solidity::frontend::test;
 using namespace solidity;
 using namespace std;
 
-namespace
-{
-    using StringPair = std::pair<std::string, std::string>;
-    struct KeyValueParser
-    {
-    public:
-        explicit KeyValueParser(string _input) : m_input(_input) {}
-        vector<StringPair> parse();
-
-    private:
-        void skipWhitespace() { while(!isPastEnd() && isspace(m_currentChar)) advance(); }
-        bool isPastEnd() { return m_position >= m_input.size(); }
-        bool isValidValue(char c) { return isprint(c) && !isPastEnd(); }
-        void reset();
-        void advance();
-
-        string m_input;
-        char m_currentChar = 0;
-        size_t m_position = 0;
-    };
-
-    void KeyValueParser::reset()
-    {
-        m_currentChar = 0;
-        m_position = 0;
-        if (!m_input.empty())
-            m_currentChar = m_input[0];
-    }
-
-    void KeyValueParser::advance()
-    {
-        ++m_position;
-        if (isPastEnd())
-            m_currentChar = 0;
-        else
-            m_currentChar = m_input[m_position];
-    }
-
-    vector<StringPair> KeyValueParser::parse()
-    {
-        reset();
-        vector<StringPair> parsedPairs;
-        string testId;
-        string testValue;
-        while (!isPastEnd())
-        {
-            skipWhitespace();
-            if (isIdentifierStart(m_currentChar))
-            {
-                testId.clear();
-                while(isIdentifierPart(m_currentChar))
-                {
-                    testId += m_currentChar;
-                    advance();
-                }
-
-                skipWhitespace();
-                soltestAssert(m_currentChar == ':');
-                advance();
-                skipWhitespace();
-
-                testValue.clear();
-                while(isValidValue(m_currentChar))
-                {
-                    testValue += m_currentChar;
-                    advance();
-                }
-                parsedPairs.emplace_back(testId, testValue);
-            }
-        }
-        return parsedPairs;
-    }
-}
-
 ASTPropertyTest::ASTPropertyTest(string const& _filename):
 	TestCase(_filename)
 {
@@ -133,10 +59,32 @@ void ASTPropertyTest::generateTestCaseValues(string& _values, bool _obtained)
     }
 }
 
+vector<StringPair> ASTPropertyTest::readKeyValuePairs(string const& _input)
+{
+    vector<StringPair> result;
+    vector<string> lines;
+    boost::algorithm::split(lines, _input, boost::is_any_of("\n"));
+    for (auto const& line: lines)
+    {
+        if (line.empty())
+            continue;
+
+        vector<string> pair;
+        boost::algorithm::split(pair, line, boost::is_any_of(":"));
+        soltestAssert(pair.size() == 2);
+        for (auto& element: pair)
+        {
+            boost::trim(element);
+            soltestAssert(ranges::all_of(element, [](char c) { return isprint(c); }));
+        }
+        result.emplace_back(pair[0], pair[1]);
+    }
+    return result;
+}
+
 void ASTPropertyTest::readExpectations()
 {
-    KeyValueParser parser{m_reader.simpleExpectations()};
-    for (auto [testId, testExpectation] : parser.parse())
+    for (auto [testId, testExpectation] : readKeyValuePairs(m_reader.simpleExpectations()))
     {
         m_testCases.emplace(testId, ASTPropertyTestCase{testId, "", testExpectation, ""});
         m_expectationsSequence.push_back(testId);
@@ -178,8 +126,9 @@ void ASTPropertyTest::readTestedProperties(Json::Value const& _astJson)
                         docNode.asString();
 
                     soltestAssert(!testCaseLine.empty());
-                    KeyValueParser parser{testCaseLine};
-                    auto [testId, testedProperty] = parser.parse()[0];
+                    auto pairs = readKeyValuePairs(testCaseLine);
+                    soltestAssert(!pairs.empty());
+                    auto [testId, testedProperty] = pairs[0];
                     m_testCases[testId].property = testedProperty;
                     auto propertyNode = findNode(node, testedProperty);
                     soltestAssert(propertyNode.has_value(), "Could not find "s + testedProperty);
@@ -190,12 +139,8 @@ void ASTPropertyTest::readTestedProperties(Json::Value const& _astJson)
                     nodesToVisit.push(node[memberName]);
         }
         else if (node.isArray())
-            for (
-                Json::Value::const_iterator member = node.begin();
-                member != node.end();
-                ++member
-            )
-                nodesToVisit.push(*member);
+            for (auto&& member: node)
+                nodesToVisit.push(member);
 
         nodesToVisit.pop();
     }

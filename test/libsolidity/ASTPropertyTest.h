@@ -29,6 +29,8 @@ namespace solidity::frontend
 class CompilerStack;
 }
 
+using StringPair = std::pair<std::string, std::string>;
+
 namespace solidity::frontend::test
 {
 
@@ -53,6 +55,7 @@ private:
 	};
 
 	void readExpectations();
+	std::vector<StringPair> readKeyValuePairs(std::string const& _input);
 	void readTestedProperties(Json::Value const& _astJson);
 	void generateTestCaseValues(std::string& _values, bool _obtained = true);
 	std::optional<Json::Value> findNode(Json::Value const& _root, std::string_view const& _property);
