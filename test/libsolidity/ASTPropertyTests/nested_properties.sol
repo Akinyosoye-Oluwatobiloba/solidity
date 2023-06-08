@@ -5,11 +5,11 @@ contract C {
         }
         /// TestCase2: initializationExpression.initialValue.value
         for(uint i = 1; i < 42; i = i * 2) {
-         }
-         /// TestCase3: loopExpression.expression.subExpression.name
-         for(uint i = 0; i < 42; i++) {
-         }
-     }
+        }
+        /// TestCase3: loopExpression.expression.subExpression.name
+        for(uint i = 0; i < 42; i++) {
+        }
+    }
 }
 // ----
 // TestCase1: <

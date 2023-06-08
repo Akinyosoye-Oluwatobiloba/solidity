@@ -84,7 +84,7 @@ vector<StringPair> ASTPropertyTest::readKeyValuePairs(string const& _input)
 
 void ASTPropertyTest::readExpectations()
 {
-    for (auto [testId, testExpectation] : readKeyValuePairs(m_reader.simpleExpectations()))
+    for (auto [testId, testExpectation]: readKeyValuePairs(m_reader.simpleExpectations()))
     {
         m_testCases.emplace(testId, ASTPropertyTestCase{testId, "", testExpectation, ""});
         m_expectationsSequence.push_back(testId);
