@@ -36,10 +36,11 @@ if __name__ == "__main__":
             ref_type="branch",
             ref="main",
             build_dependency="rust",
+            compile_only_presets=[
+                "ir-no-optimize",
+            ],
             settings_presets=[
-                # pylint: disable=line-too-long
-                #"ir-no-optimize",           # Compilation fails with "YulException: Variable var_y_1960 is 8 slot(s) too deep inside the stack."
-                #"ir-optimize-evm-only",     # Compilation fails with "YulException: Variable var_y_1960 is 8 slot(s) too deep inside the stack."
+                "ir-optimize-evm-only",
                 "ir-optimize-evm+yul",
                 "legacy-optimize-evm-only",
                 "legacy-optimize-evm+yul",
