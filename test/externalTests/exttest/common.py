@@ -209,14 +209,14 @@ def download_project(test_dir: Path, repo_url: str, ref_type: str = "branch", re
     print(f"Current commit hash: {git_commit_hash()}")
 
 
-def parse_solc_version(solc_version_string) -> str:
+def parse_solc_version(solc_version_string: str) -> str:
     solc_version_match = re.search(SOLC_FULL_VERSION_REGEX, solc_version_string)
     if solc_version_match is None:
         raise RuntimeError(f"Solc version could not be found in: {solc_version_string}.")
     return solc_version_match.group(1)
 
 
-def get_solc_short_version(solc_full_version) -> str:
+def get_solc_short_version(solc_full_version: str) -> str:
     solc_short_version_match = re.search(SOLC_SHORT_VERSION_REGEX, solc_full_version)
     if solc_short_version_match is None:
         raise RuntimeError(f"Error extracting short version string from: {solc_full_version}.")
