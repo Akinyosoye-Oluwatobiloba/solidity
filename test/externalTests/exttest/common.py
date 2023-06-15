@@ -200,7 +200,7 @@ def download_project(test_dir: Path, repo_url: str, ref_type: str = "branch", re
         os.chdir(test_dir.parent)
         run_git_command(["git", "clone", "--depth", "1", repo_url, "-b", ref, test_dir.resolve()])
         if not test_dir.exists():
-            raise RuntimeError("Git clone failed.")
+            raise RuntimeError("Failed to clone the project.")
         os.chdir(test_dir)
 
     if (test_dir / ".gitmodules").exists():
