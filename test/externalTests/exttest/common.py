@@ -185,8 +185,7 @@ def parse_command_line(description: str, args: List[str]):
 
 
 def download_project(test_dir: Path, repo_url: str, ref_type: str = "branch", ref: str = "master"):
-    if ref_type not in ("commit", "branch", "tag"):
-        raise InvalidConfigError(f"Invalid git reference type: {ref_type}")
+    assert ref_type in ("commit", "branch", "tag")
 
     print(f"Cloning {ref_type} {ref} of {repo_url}...")
     if ref_type == "commit":
