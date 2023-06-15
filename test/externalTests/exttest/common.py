@@ -226,7 +226,7 @@ def get_solc_short_version(solc_full_version: str) -> str:
 def setup_solc(config: TestConfig, test_dir: Path) -> str:
     if config.solc.binary_type == "solcjs":
         solc_dir = test_dir.parent / config.solc.install_dir
-        solc_bin = solc_dir / "dist/solc.js"
+        solc_js_entry_point = solc_dir / "dist/solc.js"
 
         print("Setting up solc-js...")
         if config.solc.solcjs_src_dir == "":
@@ -251,7 +251,7 @@ def setup_solc(config: TestConfig, test_dir: Path) -> str:
             )
 
         copyfile(config.solc.binary_path, solc_dir / "dist/soljson.js")
-        solc_version_output = subprocess.getoutput(f"node {solc_bin} --version")
+        solc_version_output = subprocess.getoutput(f"node {solc_js_entry_point} --version")
     else:
         print("Setting up solc...")
         solc_version_output = subprocess.getoutput(
