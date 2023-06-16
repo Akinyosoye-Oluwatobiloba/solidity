@@ -21,7 +21,7 @@
 
 import sys
 
-from exttest.common import CURRENT_EVM_VERSION, InvalidConfigError
+from exttest.common import InvalidConfigError
 from exttest.common import parse_command_line, run_test
 from exttest.common import TestConfig, SolcConfig
 
@@ -46,7 +46,6 @@ if __name__ == "__main__":
                 "legacy-optimize-evm+yul",
                 "legacy-no-optimize",
             ],
-            evm_version=CURRENT_EVM_VERSION,
             solc=SolcConfig(
                 binary_type=args.solc_binary_type,
                 binary_path=args.solc_binary_path,
