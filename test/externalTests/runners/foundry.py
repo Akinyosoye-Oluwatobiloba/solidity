@@ -101,33 +101,30 @@ class FoundryRunner(TestRunner):
     def compiler_settings(self, solc_version: str, presets: List[str]):
         """Configure forge tests profiles"""
 
-        binary_type = self.config.solc.binary_type
-        binary_path = self.config.solc.binary_path
         print(dedent(
             f"""\
             Configuring Forge profiles...
             -------------------------------------
             Config file: {self.foundry_config_file}
-            Binary type: {binary_type}
-            Compiler path: {binary_path}
+            Binary type: {self.config.solc.binary_type}
+            Compiler path: {self.config.solc.binary_path}
             -------------------------------------
             """
         ))
 
         # TODO: Add support to solcjs. Currently only native solc is supported. # pylint: disable=fixme
-        if binary_type == "solcjs":
+        if self.config.solc.binary_type == "solcjs":
             raise NotImplementedError(
                 "Solcjs binaries are currently not supported with Foundry. Please use `native` binary_type."
             )
 
         profiles = []
         for preset in presets:
-            name = self.profile_name(preset)
             settings = settings_from_preset(preset, self.config.evm_version)
             profiles.append(
                 self.profile_section({
-                    "name": name,
-                    "solc": binary_path,
+                    "name": self.profile_name(preset),
+                    "solc": self.config.solc.binary_path,
                     "evm_version": self.config.evm_version,
                     "optimizer": settings["optimizer"]["enabled"],
                     "via_ir": settings["viaIR"],
@@ -149,7 +146,6 @@ class FoundryRunner(TestRunner):
     def compile(self, solc_version: str, preset: str):
         """Compile project"""
 
-        solc_short_version = get_solc_short_version(solc_version)
         settings = settings_from_preset(preset, self.config.evm_version)
         print(dedent(
             f"""\
@@ -158,14 +154,13 @@ class FoundryRunner(TestRunner):
             Settings preset: {preset}
             Settings: {settings}
             EVM version: {self.config.evm_version}
-            Compiler version: {solc_short_version}
+            Compiler version: {get_solc_short_version(solc_version)}
             Compiler version (full): {solc_version}
             -------------------------------------
             """
         ))
-        name = self.profile_name(preset)
         # Set the Foundry profile environment variable
-        self.env.update({"FOUNDRY_PROFILE": name})
+        self.env.update({"FOUNDRY_PROFILE": self.profile_name(preset)})
 
         if self.compile_fn is not None:
             self.compile_fn(self.test_dir, self.env)
