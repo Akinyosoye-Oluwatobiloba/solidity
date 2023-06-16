@@ -24,7 +24,6 @@ import sys
 from exttest.common import InvalidConfigError
 from exttest.common import parse_command_line, run_test
 from exttest.common import TestConfig, SolcConfig
-
 from runners.foundry import FoundryRunner
 
 if __name__ == "__main__":

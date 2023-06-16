@@ -19,21 +19,18 @@
 # (c) 2023 solidity contributors.
 # ------------------------------------------------------------------------------
 
-import os
-import sys
 import mimetypes
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-import subprocess
-from shutil import which, copyfile, copytree, rmtree
-from argparse import ArgumentParser
-
-from dataclasses import dataclass, field
-from typing import List
-
+import os
 import re
+import subprocess
+import sys
 from abc import ABCMeta, abstractmethod
+from argparse import ArgumentParser
+from dataclasses import dataclass, field
+from pathlib import Path
+from shutil import copyfile, copytree, rmtree, which
+from tempfile import TemporaryDirectory
+from typing import List
 
 # Our scripts/ is not a proper Python package so we need to modify PYTHONPATH to import from it
 # pragma pylint: disable=import-error,wrong-import-position

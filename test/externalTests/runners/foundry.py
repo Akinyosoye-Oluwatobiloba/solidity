@@ -24,8 +24,8 @@ import re
 import subprocess
 from pathlib import Path
 from shutil import which
-from typing import Optional, List
 from textwrap import dedent
+from typing import Optional, List
 
 from exttest.common import settings_from_preset, get_solc_short_version
 from exttest.common import TestConfig, TestRunner
