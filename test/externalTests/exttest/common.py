@@ -302,7 +302,7 @@ def run_test(name: str, runner: TestRunner):
     with TemporaryDirectory(prefix=f"ext-test-{name}-") as tmp_dir:
         test_dir = Path(tmp_dir) / "ext"
         presets = runner.config.selected_presets()
-        print(f"Selected settings presets: {' '.join(map(str, presets))}")
+        print(f"Selected settings presets: {' '.join(presets)}")
 
         # Configure solc compiler
         solc_version = setup_solc(runner.config, test_dir)
