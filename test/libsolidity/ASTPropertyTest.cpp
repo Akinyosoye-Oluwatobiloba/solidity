@@ -41,115 +41,115 @@ ASTPropertyTest::ASTPropertyTest(string const& _filename):
 	if (!boost::algorithm::ends_with(_filename, ".sol"))
 		BOOST_THROW_EXCEPTION(runtime_error("Invalid test contract file name: \"" + _filename + "\"."));
 
-    m_source = m_reader.source();
-    readExpectations();
+	m_source = m_reader.source();
+	readExpectations();
 }
 
 void ASTPropertyTest::generateTestCaseValues(string& _values, bool _obtained)
 {
-    _values.clear();
-    for (auto testId: m_expectationsSequence)
-    {
-        soltestAssert(m_testCases.count(testId) > 0);
-        _values +=
-            testId +
-            ": " +
-            (_obtained ? m_testCases[testId].obtainedValue : m_testCases[testId].expectedValue)
-            + "\n";
-    }
+	_values.clear();
+	for (auto testId: m_expectationsSequence)
+	{
+		soltestAssert(m_testCases.count(testId) > 0);
+		_values +=
+			testId +
+			": " +
+			(_obtained ? m_testCases[testId].obtainedValue : m_testCases[testId].expectedValue)
+			+ "\n";
+	}
 }
 
 vector<StringPair> ASTPropertyTest::readKeyValuePairs(string const& _input)
 {
-    vector<StringPair> result;
-    vector<string> lines;
-    boost::algorithm::split(lines, _input, boost::is_any_of("\n"));
-    for (auto const& line: lines)
-    {
-        if (line.empty())
-            continue;
+	vector<StringPair> result;
+	vector<string> lines;
+	boost::algorithm::split(lines, _input, boost::is_any_of("\n"));
+	for (auto const& line: lines)
+	{
+		if (line.empty())
+			continue;
 
-        vector<string> pair;
-        boost::algorithm::split(pair, line, boost::is_any_of(":"));
-        soltestAssert(pair.size() == 2);
-        for (auto& element: pair)
-        {
-            boost::trim(element);
-            soltestAssert(ranges::all_of(element, [](char c) { return isprint(c); }));
-        }
-        result.emplace_back(pair[0], pair[1]);
-    }
-    return result;
+		vector<string> pair;
+		boost::algorithm::split(pair, line, boost::is_any_of(":"));
+		soltestAssert(pair.size() == 2);
+		for (auto& element: pair)
+		{
+			boost::trim(element);
+			soltestAssert(ranges::all_of(element, [](char c) { return isprint(c); }));
+		}
+		result.emplace_back(pair[0], pair[1]);
+	}
+	return result;
 }
 
 void ASTPropertyTest::readExpectations()
 {
-    for (auto [testId, testExpectation]: readKeyValuePairs(m_reader.simpleExpectations()))
-    {
-        m_testCases.emplace(testId, ASTPropertyTestCase{testId, "", testExpectation, ""});
-        m_expectationsSequence.push_back(testId);
-    }
-    generateTestCaseValues(m_expectation, false);
+	for (auto [testId, testExpectation]: readKeyValuePairs(m_reader.simpleExpectations()))
+	{
+		m_testCases.emplace(testId, ASTPropertyTestCase{testId, "", testExpectation, ""});
+		m_expectationsSequence.push_back(testId);
+	}
+	generateTestCaseValues(m_expectation, false);
 }
 
 optional<Json::Value> ASTPropertyTest::findNode(Json::Value const& _root, string_view const& _property)
 {
-    if (!_property.empty())
-    {
-        string subNode = string(_property.substr(0, _property.find_first_of('.')));
-        if (subNode != _property)
-            return findNode(_root[subNode], _property.substr(_property.find_first_of('.') + 1));
-        else if (_root.isMember(subNode))
-            return make_optional(_root[subNode]);
-    }
-    return {};
+	if (!_property.empty())
+	{
+		string subNode = string(_property.substr(0, _property.find_first_of('.')));
+		if (subNode != _property)
+			return findNode(_root[subNode], _property.substr(_property.find_first_of('.') + 1));
+		else if (_root.isMember(subNode))
+			return make_optional(_root[subNode]);
+	}
+	return {};
 }
 
 void ASTPropertyTest::readTestedProperties(Json::Value const& _astJson)
 {
-    queue<Json::Value> nodesToVisit;
-    nodesToVisit.push(_astJson);
-    string documentation = "documentation";
-    string testCaseLine;
+	queue<Json::Value> nodesToVisit;
+	nodesToVisit.push(_astJson);
+	string documentation = "documentation";
+	string testCaseLine;
 
-    while(!nodesToVisit.empty())
-    {
-        auto& node = nodesToVisit.front();
-        if (node.isObject())
-        {
-            for (auto memberName: node.getMemberNames())
-                if (memberName == documentation)
-                {
-                    auto docNode = node[documentation];
-                    testCaseLine = docNode.isObject() ?
-                        docNode["text"].asString() :
-                        docNode.asString();
+	while(!nodesToVisit.empty())
+	{
+		auto& node = nodesToVisit.front();
+		if (node.isObject())
+		{
+			for (auto memberName: node.getMemberNames())
+				if (memberName == documentation)
+				{
+					auto docNode = node[documentation];
+					testCaseLine = docNode.isObject() ?
+						docNode["text"].asString() :
+						docNode.asString();
 
-                    soltestAssert(!testCaseLine.empty());
-                    auto pairs = readKeyValuePairs(testCaseLine);
-                    soltestAssert(!pairs.empty());
-                    auto [testId, testedProperty] = pairs[0];
-                    m_testCases[testId].property = testedProperty;
-                    auto propertyNode = findNode(node, testedProperty);
-                    soltestAssert(propertyNode.has_value(), "Could not find "s + testedProperty);
-                    soltestAssert(!propertyNode->isObject());
-                    m_testCases[testId].obtainedValue = propertyNode->asString();
-                }
-                else
-                    nodesToVisit.push(node[memberName]);
-        }
-        else if (node.isArray())
-            for (auto&& member: node)
-                nodesToVisit.push(member);
+					soltestAssert(!testCaseLine.empty());
+					auto pairs = readKeyValuePairs(testCaseLine);
+					soltestAssert(!pairs.empty());
+					auto [testId, testedProperty] = pairs[0];
+					m_testCases[testId].property = testedProperty;
+					auto propertyNode = findNode(node, testedProperty);
+					soltestAssert(propertyNode.has_value(), "Could not find "s + testedProperty);
+					soltestAssert(!propertyNode->isObject());
+					m_testCases[testId].obtainedValue = propertyNode->asString();
+				}
+				else
+					nodesToVisit.push(node[memberName]);
+		}
+		else if (node.isArray())
+			for (auto&& member: node)
+				nodesToVisit.push(member);
 
-        nodesToVisit.pop();
-    }
-    generateTestCaseValues(m_obtainedResult, true);
+		nodesToVisit.pop();
+	}
+	generateTestCaseValues(m_obtainedResult, true);
 }
 
 TestCase::TestResult ASTPropertyTest::run(ostream& _stream, string const& _linePrefix, bool const _formatted)
 {
-    CompilerStack compiler;
+	CompilerStack compiler;
 
 	compiler.setSources({{
 		"A",
@@ -160,10 +160,10 @@ TestCase::TestResult ASTPropertyTest::run(ostream& _stream, string const& _lineP
 	if (!compiler.parseAndAnalyze())
 		BOOST_THROW_EXCEPTION(runtime_error("Parsing contract failed"));
 
-    Json::Value astJson = ASTJsonExporter(compiler.state()).toJson(compiler.ast("A"));
-    soltestAssert(astJson);
+	Json::Value astJson = ASTJsonExporter(compiler.state()).toJson(compiler.ast("A"));
+	soltestAssert(astJson);
 
-    readTestedProperties(astJson);
+	readTestedProperties(astJson);
 
-    return checkResult(_stream, _linePrefix, _formatted);
+	return checkResult(_stream, _linePrefix, _formatted);
 }
