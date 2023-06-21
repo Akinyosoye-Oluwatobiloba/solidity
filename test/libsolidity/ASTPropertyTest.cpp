@@ -24,8 +24,6 @@
 
 #include <liblangutil/Common.h>
 
-#include <libsolutil/JSON.h>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/throw_exception.hpp>
 

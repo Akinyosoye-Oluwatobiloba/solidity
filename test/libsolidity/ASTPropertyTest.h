@@ -20,6 +20,8 @@
 
 #include <test/TestCase.h>
 
+#include <libsolutil/JSON.h>
+
 #include <string>
 #include <vector>
 #include <utility>
