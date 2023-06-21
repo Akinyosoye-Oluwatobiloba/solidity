@@ -77,8 +77,8 @@ Testsuite const g_interactiveTestsuites[] = {
 	{"JSON ABI",               "libsolidity", "ABIJson",               false, false, &ABIJsonTest::create},
 	{"SMT Checker",            "libsolidity", "smtCheckerTests",       true,  false, &SMTCheckerTest::create},
 	{"Gas Estimates",          "libsolidity", "gasTests",              false, false, &GasTest::create},
-	{"Memory Guard Tests",     "libsolidity", "memoryGuardTests",      false, false, &MemoryGuardTest::create},
-	{"AST Property Tests",     "libsolidity", "ASTPropertyTests",      false, false, &ASTPropertyTest::create},
+	{"Memory Guard",           "libsolidity", "memoryGuardTests",      false, false, &MemoryGuardTest::create},
+	{"AST Properties",         "libsolidity", "ASTPropertyTests",      false, false, &ASTPropertyTest::create},
 };
 
 }
