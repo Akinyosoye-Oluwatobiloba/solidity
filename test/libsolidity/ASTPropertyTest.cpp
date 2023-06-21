@@ -16,13 +16,15 @@
 */
 // SPDX-License-Identifier: GPL-3.0
 
-#include <liblangutil/Common.h>
+#include <test/libsolidity/ASTPropertyTest.h>
+#include <test/Common.h>
+
 #include <libsolidity/ast/ASTJsonExporter.h>
 #include <libsolidity/interface/CompilerStack.h>
-#include <libsolutil/JSON.h>
 
-#include <test/Common.h>
-#include <test/libsolidity/ASTPropertyTest.h>
+#include <liblangutil/Common.h>
+
+#include <libsolutil/JSON.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/throw_exception.hpp>
