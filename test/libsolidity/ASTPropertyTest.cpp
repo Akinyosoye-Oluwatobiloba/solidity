@@ -27,6 +27,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/throw_exception.hpp>
 
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/split.hpp>
+
 #include <queue>
 
 using namespace solidity::langutil;
@@ -62,21 +65,19 @@ void ASTPropertyTest::generateTestCaseValues(string& _values, bool _obtained)
 vector<StringPair> ASTPropertyTest::readKeyValuePairs(string const& _input)
 {
 	vector<StringPair> result;
-	vector<string> lines;
-	boost::algorithm::split(lines, _input, boost::is_any_of("\n"));
-	for (auto const& line: lines)
+	for (string const& line: _input | ranges::views::split('\n') | ranges::to<vector<string>>)
 	{
 		if (line.empty())
 			continue;
 
 		vector<string> pair;
-		boost::algorithm::split(pair, line, boost::is_any_of(":"));
-		soltestAssert(pair.size() == 2);
-		for (auto& element: pair)
+		for (string const& element: line | ranges::views::split(':') | ranges::to<vector<string>>)
 		{
-			boost::trim(element);
-			soltestAssert(ranges::all_of(element, [](char c) { return isprint(c); }));
+			soltestAssert(ranges::all_of(boost::trim_copy(element), [](char c) { return isprint(c); }));
+			pair.emplace_back(boost::trim_copy(element));
 		}
+
+		soltestAssert(pair.size() == 2);
 		result.emplace_back(pair[0], pair[1]);
 	}
 	return result;
@@ -84,7 +85,7 @@ vector<StringPair> ASTPropertyTest::readKeyValuePairs(string const& _input)
 
 void ASTPropertyTest::readExpectations()
 {
-	for (auto [testId, testExpectation]: readKeyValuePairs(m_reader.simpleExpectations()))
+	for (auto const& [testId, testExpectation]: readKeyValuePairs(m_reader.simpleExpectations()))
 	{
 		m_testCases.emplace(testId, ASTPropertyTestCase{testId, "", testExpectation, ""});
 		m_expectationsSequence.push_back(testId);
