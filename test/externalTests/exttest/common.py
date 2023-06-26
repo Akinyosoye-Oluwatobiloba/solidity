@@ -37,7 +37,7 @@ from typing import List
 PROJECT_ROOT = Path(__file__).parents[3]
 sys.path.insert(0, f"{PROJECT_ROOT}/scripts")
 
-from common.git_helpers import run_git_command, git_commit_hash
+from common.git_helpers import git_commit_hash
 
 SOLC_FULL_VERSION_REGEX = re.compile(r"^[a-zA-Z: ]*(.*)$")
 SOLC_SHORT_VERSION_REGEX = re.compile(r"^([0-9.]+).*\+|\-$")
@@ -188,19 +188,19 @@ def download_project(test_dir: Path, repo_url: str, ref_type: str = "branch", re
     if ref_type == "commit":
         os.mkdir(test_dir)
         os.chdir(test_dir)
-        run_git_command(["git", "init"])
-        run_git_command(["git", "remote", "add", "origin", repo_url])
-        run_git_command(["git", "fetch", "--depth", "1", "origin", ref])
-        run_git_command(["git", "reset", "--hard", "FETCH_HEAD"])
+        subprocess.run(["git", "init"], check=True)
+        subprocess.run(["git", "remote", "add", "origin", repo_url], check=True)
+        subprocess.run(["git", "fetch", "--depth", "1", "origin", ref], check=True)
+        subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], check=True)
     else:
         os.chdir(test_dir.parent)
-        run_git_command(["git", "clone", "--depth", "1", repo_url, "-b", ref, test_dir.resolve()])
+        subprocess.run(["git", "clone", "--depth", "1", repo_url, "-b", ref, test_dir.resolve()], check=True)
         if not test_dir.exists():
             raise RuntimeError("Failed to clone the project.")
         os.chdir(test_dir)
 
     if (test_dir / ".gitmodules").exists():
-        run_git_command(["git", "submodule", "update", "--init"])
+        subprocess.run(["git", "submodule", "update", "--init"], check=True)
 
     print(f"Current commit hash: {git_commit_hash()}")
 
