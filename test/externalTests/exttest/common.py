@@ -77,10 +77,6 @@ class TestConfig:
         return set(self.compile_only_presets + self.settings_presets)
 
 
-class InvalidConfigError(Exception):
-    pass
-
-
 class WrongBinaryType(Exception):
     pass
 
@@ -89,15 +85,8 @@ class TestRunner(metaclass=ABCMeta):
     config: TestConfig
 
     def __init__(self, config: TestConfig):
-        if config.solc.binary_type not in ("native", "solcjs"):
-            raise InvalidConfigError(
-                f"Invalid solidity compiler binary type: {config.solc.binary_type}"
-            )
-        if config.solc.binary_type != "solcjs" and config.solc.solcjs_src_dir != "":
-            raise InvalidConfigError(
-                f"""Invalid test configuration: 'native' mode cannot be used with 'solcjs_src_dir'.
-                Please use 'binary_type: solcjs' or unset: 'solcjs_src_dir: {config.solc.solcjs_src_dir}'"""
-            )
+        assert(config.solc.binary_type in ("native", "solcjs"))
+        assert(config.solc.binary_type == "solcjs" or config.solc.solcjs_src_dir == "")
         self.config = config
 
     @staticmethod
@@ -105,9 +94,7 @@ class TestRunner(metaclass=ABCMeta):
         """Run a function inside the test directory"""
 
         def f(self, *args, **kwargs):
-            if self.test_dir is None:
-                raise InvalidConfigError("Test directory not defined")
-
+            assert(self.test_dir is not None)
             os.chdir(self.test_dir)
             return fn(self, *args, **kwargs)
 
@@ -144,12 +131,7 @@ def compiler_settings(evm_version, via_ir="false", optimizer="false", yul="false
 
 
 def settings_from_preset(preset: str, evm_version: str) -> dict:
-    if preset not in AVAILABLE_PRESETS:
-        raise InvalidConfigError(
-            f'Preset "{preset}" not found.\n'
-            "Please select one or more of the available presets: " +
-            " ".join(AVAILABLE_PRESETS) + "\n"
-        )
+    assert(preset in AVAILABLE_PRESETS)
     switch = {
         "legacy-no-optimize": compiler_settings(evm_version),
         "ir-no-optimize": compiler_settings(evm_version, via_ir="true"),

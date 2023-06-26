@@ -21,40 +21,34 @@
 
 import sys
 
-from exttest.common import InvalidConfigError
 from exttest.common import parse_command_line, run_test
 from exttest.common import TestConfig, SolcConfig
 from runners.foundry import FoundryRunner
 
 if __name__ == "__main__":
-    try:
-        args = parse_command_line("PRBMath external tests", sys.argv[1:])
+    args = parse_command_line("PRBMath external tests", sys.argv[1:])
 
-        runner_config = TestConfig(
-            repo_url="https://github.com/PaulRBerg/prb-math.git",
-            ref_type="branch",
-            ref="main",
-            build_dependency="rust",
-            compile_only_presets=[
-                "ir-no-optimize",
-            ],
-            settings_presets=[
-                "ir-optimize-evm-only",
-                "ir-optimize-evm+yul",
-                "legacy-optimize-evm-only",
-                "legacy-optimize-evm+yul",
-                "legacy-no-optimize",
-            ],
-            solc=SolcConfig(
-                binary_type=args.solc_binary_type,
-                binary_path=args.solc_binary_path,
-                branch="master",
-                install_dir="solc/",
-            ),
-        )
+    runner_config = TestConfig(
+        repo_url="https://github.com/PaulRBerg/prb-math.git",
+        ref_type="branch",
+        ref="main",
+        build_dependency="rust",
+        compile_only_presets=[
+            "ir-no-optimize",
+        ],
+        settings_presets=[
+            "ir-optimize-evm-only",
+            "ir-optimize-evm+yul",
+            "legacy-optimize-evm-only",
+            "legacy-optimize-evm+yul",
+            "legacy-no-optimize",
+        ],
+        solc=SolcConfig(
+            binary_type=args.solc_binary_type,
+            binary_path=args.solc_binary_path,
+            branch="master",
+            install_dir="solc/",
+        ),
+    )
 
-        run_test("PRBMath", FoundryRunner(config=runner_config))
-
-    except InvalidConfigError as exception:
-        print(f"Error while processing test: {exception}", file=sys.stderr)
-        sys.exit(1)
+    run_test("PRBMath", FoundryRunner(config=runner_config))
