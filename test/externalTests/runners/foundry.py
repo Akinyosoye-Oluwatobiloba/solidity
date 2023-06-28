@@ -23,7 +23,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from shutil import which
+from shutil import which, rmtree
 from textwrap import dedent
 from typing import Optional, List
 
@@ -93,12 +93,12 @@ class FoundryRunner(TestRunner):
         )
 
     @TestRunner.on_local_test_dir
-    def clean(self):
+    def clean(self, tmp_dir: str):
         """Clean the build artifacts and cache directories"""
-        run_forge_command("forge clean")
+        rmtree(tmp_dir)
 
     @TestRunner.on_local_test_dir
-    def compiler_settings(self, solc_version: str, presets: List[str]):
+    def compiler_settings(self, solc_binary_type: str, solc_binary_path: str, solc_version: str, presets: List[str]):
         """Configure forge tests profiles"""
 
         print(dedent(
@@ -106,17 +106,11 @@ class FoundryRunner(TestRunner):
             Configuring Forge profiles...
             -------------------------------------
             Config file: {self.foundry_config_file}
-            Binary type: {self.config.solc.binary_type}
-            Compiler path: {self.config.solc.binary_path}
+            Binary type: {solc_binary_type}
+            Compiler path: {solc_binary_path}
             -------------------------------------
             """
         ))
-
-        # TODO: Add support to solcjs. Currently only native solc is supported. # pylint: disable=fixme
-        if self.config.solc.binary_type == "solcjs":
-            raise NotImplementedError(
-                "Solcjs binaries are currently not supported with Foundry. Please use `native` binary_type."
-            )
 
         profiles = []
         for preset in presets:
@@ -124,7 +118,7 @@ class FoundryRunner(TestRunner):
             profiles.append(
                 self.profile_section({
                     "name": self.profile_name(preset),
-                    "solc": self.config.solc.binary_path,
+                    "solc": solc_binary_path,
                     "evm_version": self.config.evm_version,
                     "optimizer": settings["optimizer"]["enabled"],
                     "via_ir": settings["viaIR"],

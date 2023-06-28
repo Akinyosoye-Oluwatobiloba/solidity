@@ -29,7 +29,7 @@ from argparse import ArgumentParser
 from dataclasses import dataclass, field
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree, which
-from tempfile import TemporaryDirectory
+from tempfile import mkdtemp
 from typing import List
 
 # Our scripts/ is not a proper Python package so we need to modify PYTHONPATH to import from it
@@ -56,16 +56,8 @@ AVAILABLE_PRESETS: List[str] = [
 
 
 @dataclass
-class SolcConfig:
-    binary_type: str = field(default="native")
-    binary_path: str = field(default="/usr/local/bin/solc")
-    branch: str = field(default="master")
-    install_dir: str = field(default="solc")
-    solcjs_src_dir: str = field(default="")
-
-
-@dataclass
 class TestConfig:
+    name: str
     repo_url: str
     ref_type: str
     ref: str
@@ -73,7 +65,6 @@ class TestConfig:
     compile_only_presets: List[str] = field(default_factory=list)
     settings_presets: List[str] = field(default_factory=lambda: AVAILABLE_PRESETS)
     evm_version: str = field(default=CURRENT_EVM_VERSION)
-    solc: SolcConfig = field(default_factory=SolcConfig)
 
     def selected_presets(self):
         return set(self.compile_only_presets + self.settings_presets)
@@ -87,9 +78,6 @@ class TestRunner(metaclass=ABCMeta):
     config: TestConfig
 
     def __init__(self, config: TestConfig):
-        assert(config.solc.binary_type in ("native", "solcjs"))
-        if(config.solc.binary_type == "native"):
-            assert(config.solc.solcjs_src_dir == "")
         self.config = config
 
     @staticmethod
@@ -108,11 +96,11 @@ class TestRunner(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def clean(self):
+    def clean(self, tmp_dir: str):
         pass
 
     @abstractmethod
-    def compiler_settings(self, solc_version: str, presets: List[str]):
+    def compiler_settings(self, solc_binary_type: str, solc_binary_path: str, solc_version: str, presets: List[str]):
         pass
 
     @abstractmethod
@@ -154,14 +142,23 @@ def parse_command_line(description: str, args: List[str]):
         "solc_binary_type",
         metavar="solc-binary-type",
         type=str,
-        help="""Solidity compiler binary type""",
+        default="native",
         choices=["native", "solcjs"],
+        help="""Solidity compiler binary type"""
     )
     arg_parser.add_argument(
         "solc_binary_path",
         metavar="solc-binary-path",
-        type=str,
+        type=Path,
+        default=Path("/usr/local/bin/solc"),
         help="""Path to solc or soljson.js binary""",
+    )
+    arg_parser.add_argument(
+        "solcjs_src_dir",
+        metavar="solcjs-src-dir",
+        type=str,
+        default="",
+        help="""Solcjs source code directory""",
     )
     return arg_parser.parse_args(args)
 
@@ -204,39 +201,37 @@ def get_solc_short_version(solc_full_version: str) -> str:
     return solc_short_version_match.group(1)
 
 
-def setup_solc(config: TestConfig, test_dir: Path) -> str:
-    if config.solc.binary_type == "solcjs":
-        solc_dir = test_dir.parent / config.solc.install_dir
+def setup_solc(binary_type: str, binary_path: Path, solcjs_src_dir: str, test_dir: Path) -> str:
+    if binary_type == "solcjs":
+        solc_dir = test_dir.parent / "solc"
         solc_js_entry_point = solc_dir / "dist/solc.js"
 
         print("Setting up solc-js...")
-        if config.solc.solcjs_src_dir == "":
+        if solcjs_src_dir == "":
             download_project(
                 solc_dir,
-                "https://github.com/ethereum/solc-js.git",
-                "branch",
-                config.solc.branch,
+                "https://github.com/ethereum/solc-js.git"
             )
         else:
-            print(f"Using local solc-js from {config.solc.solcjs_src_dir}...")
-            copytree(config.solc.solcjs_src_dir, solc_dir)
+            print(f"Using local solc-js from {solcjs_src_dir}...")
+            copytree(solcjs_src_dir, solc_dir)
             rmtree(solc_dir / "dist")
             rmtree(solc_dir / "node_modules")
         os.chdir(solc_dir)
         subprocess.run(["npm", "install"], check=True)
         subprocess.run(["npm", "run", "build"], check=True)
 
-        if mimetypes.guess_type(config.solc.binary_path)[0] != "application/javascript":
+        if mimetypes.guess_type(binary_path)[0] not in ("text/javascript", "application/javascript"):
             raise WrongBinaryType(
                 "Provided soljson.js is expected to be of the type application/javascript but it is not."
             )
 
-        copyfile(config.solc.binary_path, solc_dir / "dist/soljson.js")
+        copyfile(binary_path, solc_dir / "dist/soljson.js")
         solc_version_output = subprocess.getoutput(f"node {solc_js_entry_point} --version")
     else:
         print("Setting up solc...")
         solc_version_output = subprocess.getoutput(
-            f"{config.solc.binary_path} --version"
+            f"{binary_path} --version"
         ).split(":")[1]
 
     return parse_solc_version(solc_version_output)
@@ -279,39 +274,43 @@ def replace_version_pragmas(test_dir: Path):
             f.write(content)
 
 
-def run_test(name: str, runner: TestRunner):
-    print(f"Testing {name}...\n===========================")
-    with TemporaryDirectory(prefix=f"ext-test-{name}-") as tmp_dir:
-        test_dir = Path(tmp_dir) / "ext"
-        presets = runner.config.selected_presets()
-        print(f"Selected settings presets: {' '.join(presets)}")
+def run_test(args, runner: TestRunner):
+    if args.solc_binary_type == "native":
+        assert args.solcjs_src_dir == ""
 
-        # Configure solc compiler
-        solc_version = setup_solc(runner.config, test_dir)
-        print(f"Using compiler version {solc_version}")
+    print(f"Testing {runner.config.name}...\n===========================")
 
-        # Download project
-        download_project(test_dir, runner.config.repo_url, runner.config.ref_type, runner.config.ref)
+    tmp_dir = mkdtemp(prefix=f"ext-test-{runner.config.name}-")
+    test_dir = Path(tmp_dir) / "ext"
+    presets = runner.config.selected_presets()
+    print(f"Selected settings presets: {' '.join(presets)}")
 
-        # Configure run environment
-        if runner.config.build_dependency == "nodejs":
-            prepare_node_env(test_dir)
-        runner.setup_environment(test_dir)
+    # Configure solc compiler
+    solc_version = setup_solc(args.solc_binary_type, args.solc_binary_path, args.solcjs_src_dir, test_dir)
+    print(f"Using compiler version {solc_version}")
 
-        replace_version_pragmas(test_dir)
-        # Configure TestRunner instance
-        runner.compiler_settings(solc_version, presets)
-        for preset in runner.config.selected_presets():
-            print("Running compile function...")
-            runner.compile(solc_version, preset)
-            if (
-                os.environ.get("COMPILE_ONLY") == "1"
-                or preset in runner.config.compile_only_presets
-            ):
-                print("Skipping test function...")
-            else:
-                print("Running test function...")
-                runner.run_test(preset)
-            # TODO: store_benchmark_report # pylint: disable=fixme
-            # runner.clean()
-        print("Done.")
+    # Download project
+    download_project(test_dir, runner.config.repo_url, runner.config.ref_type, runner.config.ref)
+
+    # Configure run environment
+    if runner.config.build_dependency == "nodejs":
+        prepare_node_env(test_dir)
+    runner.setup_environment(test_dir)
+
+    replace_version_pragmas(test_dir)
+    # Configure TestRunner instance
+    runner.compiler_settings(args.solc_binary_type, args.solc_binary_path, solc_version, presets)
+    for preset in runner.config.selected_presets():
+        print("Running compile function...")
+        runner.compile(solc_version, preset)
+        if (
+            os.environ.get("COMPILE_ONLY") == "1"
+            or preset in runner.config.compile_only_presets
+        ):
+            print("Skipping test function...")
+        else:
+            print("Running test function...")
+            runner.run_test(preset)
+        # TODO: store_benchmark_report # pylint: disable=fixme
+    runner.clean(tmp_dir)
+    print("Done.")

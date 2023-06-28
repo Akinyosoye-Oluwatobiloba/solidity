@@ -22,13 +22,14 @@
 import sys
 
 from exttest.common import parse_command_line, run_test
-from exttest.common import TestConfig, SolcConfig
+from exttest.common import TestConfig
 from runners.foundry import FoundryRunner
 
 if __name__ == "__main__":
     args = parse_command_line("PRBMath external tests", sys.argv[1:])
 
     runner_config = TestConfig(
+        name="PRBMath",
         repo_url="https://github.com/PaulRBerg/prb-math.git",
         ref_type="branch",
         ref="main",
@@ -43,12 +44,6 @@ if __name__ == "__main__":
             "legacy-optimize-evm+yul",
             "legacy-no-optimize",
         ],
-        solc=SolcConfig(
-            binary_type=args.solc_binary_type,
-            binary_path=args.solc_binary_path,
-            branch="master",
-            install_dir="solc/",
-        ),
     )
 
-    run_test("PRBMath", FoundryRunner(config=runner_config))
+    sys.exit(run_test(args, FoundryRunner(config=runner_config)))
