@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree, which
 from tempfile import mkdtemp
+from textwrap import dedent
 from typing import List
 
 # Our scripts/ is not a proper Python package so we need to modify PYTHONPATH to import from it
@@ -100,15 +101,15 @@ class TestRunner(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def compiler_settings(self, solc_binary_type: str, solc_binary_path: str, solc_version: str, presets: List[str]):
+    def compiler_settings(self, solc_binary_path: str, presets: List[str]):
         pass
 
     @abstractmethod
-    def compile(self, solc_version: str, preset: str):
+    def compile(self, preset: str):
         pass
 
     @abstractmethod
-    def run_test(self, preset: str):
+    def run_test(self):
         pass
 
 
@@ -274,7 +275,9 @@ def replace_version_pragmas(test_dir: Path):
             f.write(content)
 
 
-def run_test(args, runner: TestRunner):
+def run_test(argv, runner: TestRunner):
+    args = parse_command_line(f"{runner.config.name} external tests", argv)
+
     if args.solc_binary_type == "native":
         assert args.solcjs_src_dir == ""
 
@@ -299,10 +302,32 @@ def run_test(args, runner: TestRunner):
 
     replace_version_pragmas(test_dir)
     # Configure TestRunner instance
-    runner.compiler_settings(args.solc_binary_type, args.solc_binary_path, solc_version, presets)
+    print(dedent(
+        f"""\
+        Configuring runner's profiles with:
+        -------------------------------------
+        Binary type: {args.solc_binary_type}
+        Compiler path: {args.solc_binary_path}
+        -------------------------------------
+        """
+    ))
+    runner.compiler_settings(args.solc_binary_path, presets)
     for preset in runner.config.selected_presets():
         print("Running compile function...")
-        runner.compile(solc_version, preset)
+        settings = settings_from_preset(preset, runner.config.evm_version)
+        print(dedent(
+            f"""\
+            Using runner's profile:
+            -------------------------------------
+            Settings preset: {preset}
+            Settings: {settings}
+            EVM version: {runner.config.evm_version}
+            Compiler version: {get_solc_short_version(solc_version)}
+            Compiler version (full): {solc_version}
+            -------------------------------------
+            """
+        ))
+        runner.compile(preset)
         if (
             os.environ.get("COMPILE_ONLY") == "1"
             or preset in runner.config.compile_only_presets
@@ -310,7 +335,7 @@ def run_test(args, runner: TestRunner):
             print("Skipping test function...")
         else:
             print("Running test function...")
-            runner.run_test(preset)
+            runner.run_test()
         # TODO: store_benchmark_report # pylint: disable=fixme
     runner.clean(tmp_dir)
     print("Done.")

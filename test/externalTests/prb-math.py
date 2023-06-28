@@ -21,13 +21,11 @@
 
 import sys
 
-from exttest.common import parse_command_line, run_test
+from exttest.common import run_test
 from exttest.common import TestConfig
 from runners.foundry import FoundryRunner
 
 if __name__ == "__main__":
-    args = parse_command_line("PRBMath external tests", sys.argv[1:])
-
     runner_config = TestConfig(
         name="PRBMath",
         repo_url="https://github.com/PaulRBerg/prb-math.git",
@@ -46,4 +44,4 @@ if __name__ == "__main__":
         ],
     )
 
-    sys.exit(run_test(args, FoundryRunner(config=runner_config)))
+    sys.exit(run_test(sys.argv[1:], FoundryRunner(config=runner_config)))

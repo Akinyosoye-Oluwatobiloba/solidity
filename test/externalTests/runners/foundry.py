@@ -27,7 +27,7 @@ from shutil import which, rmtree
 from textwrap import dedent
 from typing import Optional, List
 
-from exttest.common import settings_from_preset, get_solc_short_version
+from exttest.common import settings_from_preset
 from exttest.common import TestConfig, TestRunner
 
 
@@ -98,19 +98,8 @@ class FoundryRunner(TestRunner):
         rmtree(tmp_dir)
 
     @TestRunner.on_local_test_dir
-    def compiler_settings(self, solc_binary_type: str, solc_binary_path: str, solc_version: str, presets: List[str]):
+    def compiler_settings(self, solc_binary_path: str, presets: List[str]):
         """Configure forge tests profiles"""
-
-        print(dedent(
-            f"""\
-            Configuring Forge profiles...
-            -------------------------------------
-            Config file: {self.foundry_config_file}
-            Binary type: {solc_binary_type}
-            Compiler path: {solc_binary_path}
-            -------------------------------------
-            """
-        ))
 
         profiles = []
         for preset in presets:
@@ -137,22 +126,9 @@ class FoundryRunner(TestRunner):
         run_forge_command("forge install", self.env)
 
     @TestRunner.on_local_test_dir
-    def compile(self, solc_version: str, preset: str):
+    def compile(self, preset: str):
         """Compile project"""
 
-        settings = settings_from_preset(preset, self.config.evm_version)
-        print(dedent(
-            f"""\
-            Using Forge profile...
-            -------------------------------------
-            Settings preset: {preset}
-            Settings: {settings}
-            EVM version: {self.config.evm_version}
-            Compiler version: {get_solc_short_version(solc_version)}
-            Compiler version (full): {solc_version}
-            -------------------------------------
-            """
-        ))
         # Set the Foundry profile environment variable
         self.env.update({"FOUNDRY_PROFILE": self.profile_name(preset)})
 
@@ -162,7 +138,7 @@ class FoundryRunner(TestRunner):
             run_forge_command("forge build", self.env)
 
     @TestRunner.on_local_test_dir
-    def run_test(self, preset: str):
+    def run_test(self):
         """Run project tests"""
 
         if self.test_fn is not None:
