@@ -22,13 +22,11 @@
 import os
 import re
 import subprocess
-from pathlib import Path
-from shutil import which, rmtree
+from shutil import which
 from textwrap import dedent
 from typing import Optional, List
 
-from exttest.common import settings_from_preset
-from exttest.common import TestConfig, TestRunner
+from exttest.common import settings_from_preset, TestRunner
 
 
 def run_forge_command(command: str, env: Optional[dict] = None):
@@ -43,24 +41,10 @@ class FoundryRunner(TestRunner):
     """Configure and run Foundry-based projects"""
     foundry_config_file = "foundry.toml"
 
-    def __init__(self, config: TestConfig, setup_fn=None, compile_fn=None, test_fn=None):
-        super().__init__(config)
-        self.setup_fn = setup_fn
-        self.compile_fn = compile_fn
-        self.test_fn = test_fn
-        self.env = os.environ.copy()
-        # Note: the test_dir will be set on setup_environment
-        self.test_dir: Path
-
-    def setup_environment(self, test_dir: Path):
-        """Configure the project build environment"""
-
-        print("Configuring Foundry building environment...")
-        self.test_dir = test_dir
+    def setup_environment(self):
+        super().setup_environment()
         if which("forge") is None:
             raise RuntimeError("Forge not found.")
-        if self.setup_fn:
-            self.setup_fn(self.test_dir, self.env)
 
     @staticmethod
     def profile_name(preset: str):
@@ -92,14 +76,9 @@ class FoundryRunner(TestRunner):
             yul=profile_fields["yul"]
         )
 
-    @TestRunner.on_local_test_dir
-    def clean(self, tmp_dir: str):
-        """Clean the build artifacts and cache directories"""
-        rmtree(tmp_dir)
-
-    @TestRunner.on_local_test_dir
-    def compiler_settings(self, solc_binary_path: str, presets: List[str]):
+    def compiler_settings(self, presets: List[str]):
         """Configure forge tests profiles"""
+        super().compiler_settings(presets)
 
         profiles = []
         for preset in presets:
@@ -107,7 +86,7 @@ class FoundryRunner(TestRunner):
             profiles.append(
                 self.profile_section({
                     "name": self.profile_name(preset),
-                    "solc": solc_binary_path,
+                    "solc": self.solc_binary_path,
                     "evm_version": self.config.evm_version,
                     "optimizer": settings["optimizer"]["enabled"],
                     "via_ir": settings["viaIR"],
@@ -125,23 +104,16 @@ class FoundryRunner(TestRunner):
 
         run_forge_command("forge install", self.env)
 
-    @TestRunner.on_local_test_dir
-    def compile(self, preset: str):
+    def compile(self, solc_version: str, preset: str):
         """Compile project"""
 
+        super().compile(solc_version, preset)
         # Set the Foundry profile environment variable
         self.env.update({"FOUNDRY_PROFILE": self.profile_name(preset)})
+        run_forge_command("forge build", self.env)
 
-        if self.compile_fn is not None:
-            self.compile_fn(self.test_dir, self.env)
-        else:
-            run_forge_command("forge build", self.env)
-
-    @TestRunner.on_local_test_dir
     def run_test(self):
         """Run project tests"""
 
-        if self.test_fn is not None:
-            self.test_fn(self.test_dir, self.env)
-        else:
-            run_forge_command("forge test --gas-report", self.env)
+        super().run_test()
+        run_forge_command("forge test --gas-report", self.env)

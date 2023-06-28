@@ -21,27 +21,27 @@
 
 import sys
 
-from exttest.common import run_test
-from exttest.common import TestConfig
+from exttest.common import run_test, TestConfig
 from runners.foundry import FoundryRunner
 
-if __name__ == "__main__":
-    runner_config = TestConfig(
-        name="PRBMath",
-        repo_url="https://github.com/PaulRBerg/prb-math.git",
-        ref_type="branch",
-        ref="main",
-        build_dependency="rust",
-        compile_only_presets=[
-            "ir-no-optimize",
-        ],
-        settings_presets=[
-            "ir-optimize-evm-only",
-            "ir-optimize-evm+yul",
-            "legacy-optimize-evm-only",
-            "legacy-optimize-evm+yul",
-            "legacy-no-optimize",
-        ],
-    )
+test_config = TestConfig(
+    name="PRBMath",
+    repo_url="https://github.com/PaulRBerg/prb-math.git",
+    ref_type="branch",
+    ref="main",
+    build_dependency="rust",
+    compile_only_presets=[
+        "ir-no-optimize",
+    ],
+    settings_presets=[
+        "ir-optimize-evm-only",
+        "ir-optimize-evm+yul",
+        "legacy-optimize-evm-only",
+        "legacy-optimize-evm+yul",
+        "legacy-no-optimize",
+    ],
+)
 
-    sys.exit(run_test(sys.argv[1:], FoundryRunner(config=runner_config)))
+sys.exit(
+    run_test(FoundryRunner(argv=sys.argv[1:], config=test_config))
+)
