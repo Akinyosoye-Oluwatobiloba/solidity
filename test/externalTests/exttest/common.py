@@ -42,7 +42,9 @@ from common.git_helpers import git_commit_hash
 SOLC_FULL_VERSION_REGEX = re.compile(r"^[a-zA-Z: ]*(.*)$")
 SOLC_SHORT_VERSION_REGEX = re.compile(r"^([0-9.]+).*\+|\-$")
 
-CURRENT_EVM_VERSION: str = "london"
+evm = os.environ.get("DEFAULT_EVM")
+CURRENT_EVM_VERSION: str = evm if evm is not None else "shanghai"
+
 AVAILABLE_PRESETS: List[str] = [
     "legacy-no-optimize",
     "ir-no-optimize",
