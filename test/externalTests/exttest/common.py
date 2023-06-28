@@ -88,7 +88,8 @@ class TestRunner(metaclass=ABCMeta):
 
     def __init__(self, config: TestConfig):
         assert(config.solc.binary_type in ("native", "solcjs"))
-        assert(config.solc.binary_type == "solcjs" or config.solc.solcjs_src_dir == "")
+        if(config.solc.binary_type == "native"):
+            assert(config.solc.solcjs_src_dir == "")
         self.config = config
 
     @staticmethod
