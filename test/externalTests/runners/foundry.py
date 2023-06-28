@@ -78,7 +78,7 @@ class FoundryRunner(TestRunner):
 
     def compiler_settings(self, presets: List[str]):
         """Configure forge tests profiles"""
-        super().compiler_settings(presets)
+        super().compiler_settings()
 
         profiles = []
         for preset in presets:

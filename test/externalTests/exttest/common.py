@@ -141,6 +141,9 @@ class TestRunner(metaclass=ABCMeta):
     def setup_environment(self):
         """Configure the project build environment"""
         print("Configuring Runner building environment...")
+        if self.config.build_dependency == "nodejs":
+            prepare_node_env(self.test_dir)
+        replace_version_pragmas(self.test_dir)
 
     @on_local_test_dir
     def clean(self):
@@ -148,7 +151,7 @@ class TestRunner(metaclass=ABCMeta):
         rmtree(self.tmp_dir)
 
     @on_local_test_dir
-    def compiler_settings(self, _: List[str]):
+    def compiler_settings(self):
         print(dedent(
             f"""\
             Configuring runner's profiles with:
@@ -190,7 +193,7 @@ def compiler_settings(evm_version, via_ir="false", optimizer="false", yul="false
 
 
 def settings_from_preset(preset: str, evm_version: str) -> dict:
-    assert(preset in AVAILABLE_PRESETS)
+    assert preset in AVAILABLE_PRESETS
     switch = {
         "legacy-no-optimize": compiler_settings(evm_version),
         "ir-no-optimize": compiler_settings(evm_version, via_ir="true"),
@@ -325,15 +328,13 @@ def run_test(runner: TestRunner):
     )
 
     # Configure run environment
-    if runner.config.build_dependency == "nodejs":
-        prepare_node_env(runner.test_dir)
     runner.setup_environment()
 
-    replace_version_pragmas(runner.test_dir)
     # Configure TestRunner instance
     runner.compiler_settings(presets)
     for preset in runner.config.selected_presets():
         runner.compile(solc_version, preset)
+        # TODO: COMPILE_ONLY should be a command-line option
         if (
             os.environ.get("COMPILE_ONLY") == "1"
             or preset in runner.config.compile_only_presets
