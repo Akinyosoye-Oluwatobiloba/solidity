@@ -86,7 +86,7 @@ class TestRunner(metaclass=ABCMeta):
 
     def setup_solc(self) -> str:
         if self.solc_binary_type == "solcjs":
-            # TODO: add support to solc-js
+            # TODO: add support to solc-js # pylint: disable=fixme
             raise NotImplementedError()
         print("Setting up solc...")
         solc_version_output = subprocess.getoutput(f"{self.solc_binary_path} --version").split(":")[1]
@@ -115,17 +115,17 @@ class TestRunner(metaclass=ABCMeta):
 
     @on_local_test_dir
     def compiler_settings(self, _: List[str]):
-        # TODO: default to hardhat
+        # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
     @on_local_test_dir
     def compile(self, _: str):
-        # TODO: default to hardhat
+        # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
     @on_local_test_dir
     def run_test(self):
-        # TODO: default to hardhat
+        # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
 
@@ -273,7 +273,7 @@ def run_test(runner: TestRunner):
             )
         )
         runner.compile(preset)
-        # TODO: COMPILE_ONLY should be a command-line option
+        # TODO: COMPILE_ONLY should be a command-line option # pylint: disable=fixme
         if os.environ.get("COMPILE_ONLY") == "1" or preset in runner.config.compile_only_presets:
             print("Skipping test function...")
         else:
