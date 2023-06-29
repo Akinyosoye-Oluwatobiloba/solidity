@@ -691,7 +691,7 @@ defaults:
       name: t_native_test_ext_prb_math
       project: prb-math
       binary_type: native
-      image: cimg/rust:1.66.1
+      image: cimg/rust:1.70
 
   - job_native_test_ext_elementfi: &job_native_test_ext_elementfi
       <<: *requires_b_ubu_static
