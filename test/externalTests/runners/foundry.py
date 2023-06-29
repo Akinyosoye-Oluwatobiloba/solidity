@@ -39,6 +39,7 @@ def run_forge_command(command: str, env: Optional[dict] = None):
 
 class FoundryRunner(TestRunner):
     """Configure and run Foundry-based projects"""
+
     foundry_config_file = "foundry.toml"
 
     def setup_environment(self):
@@ -73,7 +74,7 @@ class FoundryRunner(TestRunner):
             evm_version=profile_fields["evm_version"],
             optimizer=profile_fields["optimizer"],
             via_ir=profile_fields["via_ir"],
-            yul=profile_fields["yul"]
+            yul=profile_fields["yul"],
         )
 
     def compiler_settings(self, presets: List[str]):
@@ -83,14 +84,16 @@ class FoundryRunner(TestRunner):
         for preset in presets:
             settings = settings_from_preset(preset, self.config.evm_version)
             profiles.append(
-                self.profile_section({
-                    "name": self.profile_name(preset),
-                    "solc": self.solc_binary_path,
-                    "evm_version": self.config.evm_version,
-                    "optimizer": settings["optimizer"]["enabled"],
-                    "via_ir": settings["viaIR"],
-                    "yul": settings["optimizer"]["details"]["yul"]
-                })
+                self.profile_section(
+                    {
+                        "name": self.profile_name(preset),
+                        "solc": self.solc_binary_path,
+                        "evm_version": self.config.evm_version,
+                        "optimizer": settings["optimizer"]["enabled"],
+                        "via_ir": settings["viaIR"],
+                        "yul": settings["optimizer"]["details"]["yul"],
+                    }
+                )
             )
 
         with open(

@@ -100,10 +100,7 @@ class TestRunner(metaclass=ABCMeta):
 
             print("Setting up solc-js...")
             if self.solcjs_src_dir == "":
-                download_project(
-                    solc_dir,
-                    "https://github.com/ethereum/solc-js.git"
-                )
+                download_project(solc_dir, "https://github.com/ethereum/solc-js.git")
             else:
                 print(f"Using local solc-js from {self.solcjs_src_dir}...")
                 copytree(self.solcjs_src_dir, solc_dir)
@@ -116,17 +113,13 @@ class TestRunner(metaclass=ABCMeta):
             subprocess.run(["npm", "run", "build"], check=True)
 
             if mimetypes.guess_type(self.solc_binary_path)[0] not in ("text/javascript", "application/javascript"):
-                raise WrongBinaryType(
-                    "Provided soljson.js is expected to be of the type application/javascript but it is not."
-                )
+                raise WrongBinaryType("Provided soljson.js is expected to be of the type application/javascript but it is not.")
 
             copyfile(self.solc_binary_path, solc_dir / "dist/soljson.js")
             solc_version_output = subprocess.getoutput(f"node {solc_js_entry_point} --version")
         else:
             print("Setting up solc...")
-            solc_version_output = subprocess.getoutput(
-                f"{self.solc_binary_path} --version"
-            ).split(":")[1]
+            solc_version_output = subprocess.getoutput(f"{self.solc_binary_path} --version").split(":")[1]
 
         return parse_solc_version(solc_version_output)
 
@@ -138,6 +131,7 @@ class TestRunner(metaclass=ABCMeta):
             assert self.test_dir is not None
             os.chdir(self.test_dir)
             return fn(self, *args, **kwargs)
+
         return f
 
     def setup_environment(self):
@@ -185,8 +179,7 @@ def settings_from_preset(preset: str, evm_version: str) -> dict:
         "legacy-optimize-evm-only": compiler_settings(evm_version, optimizer="true"),
         "ir-optimize-evm-only": compiler_settings(evm_version, via_ir="true", optimizer="true"),
         "legacy-optimize-evm+yul": compiler_settings(evm_version, optimizer="true", yul="true"),
-        "ir-optimize-evm+yul":
-            compiler_settings(evm_version, via_ir="true", optimizer="true", yul="true"),
+        "ir-optimize-evm+yul": compiler_settings(evm_version, via_ir="true", optimizer="true", yul="true"),
     }
     assert preset in switch
     return switch[preset]
@@ -200,7 +193,7 @@ def parse_command_line(description: str, args: List[str]):
         type=str,
         default="native",
         choices=["native", "solcjs"],
-        help="""Solidity compiler binary type"""
+        help="""Solidity compiler binary type""",
     )
     arg_parser.add_argument(
         "solc_binary_path",
@@ -305,32 +298,30 @@ def run_test(runner: TestRunner):
     print(f"Using compiler version {solc_version}")
 
     # Download project
-    download_project(
-        runner.test_dir,
-        runner.config.repo_url,
-        runner.config.ref_type,
-        runner.config.ref
-    )
+    download_project(runner.test_dir, runner.config.repo_url, runner.config.ref_type, runner.config.ref)
 
     # Configure run environment
     runner.setup_environment()
 
     # Configure TestRunner instance
-    print(dedent(
-        f"""\
+    print(
+        dedent(
+            f"""\
         Configuring runner's profiles with:
         -------------------------------------
         Binary type: {runner.solc_binary_type}
         Compiler path: {runner.solc_binary_path}
         -------------------------------------
         """
-    ))
+        )
+    )
     runner.compiler_settings(presets)
     for preset in runner.config.selected_presets():
         print("Running compile function...")
         settings = settings_from_preset(preset, runner.config.evm_version)
-        print(dedent(
-            f"""\
+        print(
+            dedent(
+                f"""\
             -------------------------------------
             Settings preset: {preset}
             Settings: {settings}
@@ -339,13 +330,11 @@ def run_test(runner: TestRunner):
             Compiler version (full): {solc_version}
             -------------------------------------
             """
-        ))
+            )
+        )
         runner.compile(preset)
         # TODO: COMPILE_ONLY should be a command-line option
-        if (
-            os.environ.get("COMPILE_ONLY") == "1"
-            or preset in runner.config.compile_only_presets
-        ):
+        if os.environ.get("COMPILE_ONLY") == "1" or preset in runner.config.compile_only_presets:
             print("Skipping test function...")
         else:
             print("Running test function...")
