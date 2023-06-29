@@ -21,13 +21,19 @@
 
 import os
 import re
+import sys
 import subprocess
+from pathlib import Path
 from shutil import which
 from textwrap import dedent
 from typing import Optional, List
 
-from exttest.common import settings_from_preset, TestRunner
+# Our scripts/ is not a proper Python package so we need to modify PYTHONPATH to import from it
+# pragma pylint: disable=import-error,wrong-import-position
+PROJECT_ROOT = Path(__file__).parents[3]
+sys.path.insert(0, f"{PROJECT_ROOT}/scripts/externalTests")
 
+from common import settings_from_preset, TestRunner
 
 def run_forge_command(command: str, env: Optional[dict] = None):
     subprocess.run(

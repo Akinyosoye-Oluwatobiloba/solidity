@@ -35,10 +35,10 @@ from typing import List
 
 # Our scripts/ is not a proper Python package so we need to modify PYTHONPATH to import from it
 # pragma pylint: disable=import-error,wrong-import-position
-PROJECT_ROOT = Path(__file__).parents[3]
-sys.path.insert(0, f"{PROJECT_ROOT}/scripts")
+PROJECT_ROOT = Path(__file__).parents[2]
+sys.path.insert(0, f"{PROJECT_ROOT}/scripts/common")
 
-from common.git_helpers import git_commit_hash
+from git_helpers import git_commit_hash
 
 SOLC_FULL_VERSION_REGEX = re.compile(r"^[a-zA-Z: ]*(.*)$")
 SOLC_SHORT_VERSION_REGEX = re.compile(r"^([0-9.]+).*\+|\-$")

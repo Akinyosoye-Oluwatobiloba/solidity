@@ -20,8 +20,14 @@
 # ------------------------------------------------------------------------------
 
 import sys
+from pathlib import Path
 
-from exttest.common import run_test, TestConfig
+# Our scripts/ is not a proper Python package so we need to modify PYTHONPATH to import from it
+# pragma pylint: disable=import-error,wrong-import-position
+PROJECT_ROOT = Path(__file__).parents[2]
+sys.path.insert(0, f"{PROJECT_ROOT}/scripts/externalTests")
+
+from common import run_test, TestConfig
 from runners.foundry import FoundryRunner
 
 test_config = TestConfig(
