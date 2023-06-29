@@ -19,7 +19,6 @@
 # (c) 2023 solidity contributors.
 # ------------------------------------------------------------------------------
 
-import mimetypes
 import os
 import re
 import subprocess
@@ -28,7 +27,7 @@ from abc import ABCMeta
 from argparse import ArgumentParser
 from dataclasses import dataclass, field
 from pathlib import Path
-from shutil import copyfile, copytree, rmtree, which
+from shutil import rmtree
 from tempfile import mkdtemp
 from textwrap import dedent
 from typing import List
@@ -71,56 +70,26 @@ class TestConfig:
         return set(self.compile_only_presets + self.settings_presets)
 
 
-class WrongBinaryType(Exception):
-    pass
-
-
 class TestRunner(metaclass=ABCMeta):
     config: TestConfig
     solc_binary_type: str
     solc_binary_path: Path
-    solcjs_src_dir: str
 
     def __init__(self, argv, config: TestConfig):
         args = parse_command_line(f"{config.name} external tests", argv)
-        if args.solc_binary_type == "native":
-            assert args.solcjs_src_dir == ""
         self.config = config
         self.solc_binary_type = args.solc_binary_type
         self.solc_binary_path = args.solc_binary_path
-        self.solcjs_src_dir = args.solcjs_src_dir
         self.env = os.environ.copy()
         self.tmp_dir = mkdtemp(prefix=f"ext-test-{config.name}-")
         self.test_dir = Path(self.tmp_dir) / "ext"
 
     def setup_solc(self) -> str:
         if self.solc_binary_type == "solcjs":
-            solc_dir = self.test_dir.parent / "solc"
-            solc_js_entry_point = solc_dir / "dist/solc.js"
-
-            print("Setting up solc-js...")
-            if self.solcjs_src_dir == "":
-                download_project(solc_dir, "https://github.com/ethereum/solc-js.git")
-            else:
-                print(f"Using local solc-js from {self.solcjs_src_dir}...")
-                copytree(self.solcjs_src_dir, solc_dir)
-                rmtree(solc_dir / "dist")
-                rmtree(solc_dir / "node_modules")
-            if which("npm") is None:
-                raise RuntimeError("NPM not found.")
-            os.chdir(solc_dir)
-            subprocess.run(["npm", "install"], check=True)
-            subprocess.run(["npm", "run", "build"], check=True)
-
-            if mimetypes.guess_type(self.solc_binary_path)[0] not in ("text/javascript", "application/javascript"):
-                raise WrongBinaryType("Provided soljson.js is expected to be of the type application/javascript but it is not.")
-
-            copyfile(self.solc_binary_path, solc_dir / "dist/soljson.js")
-            solc_version_output = subprocess.getoutput(f"node {solc_js_entry_point} --version")
-        else:
-            print("Setting up solc...")
-            solc_version_output = subprocess.getoutput(f"{self.solc_binary_path} --version").split(":")[1]
-
+            # TODO: add support to solc-js
+            raise NotImplementedError()
+        print("Setting up solc...")
+        solc_version_output = subprocess.getoutput(f"{self.solc_binary_path} --version").split(":")[1]
         return parse_solc_version(solc_version_output)
 
     @staticmethod
@@ -137,8 +106,6 @@ class TestRunner(metaclass=ABCMeta):
     def setup_environment(self):
         """Configure the project build environment"""
         print("Configuring Runner building environment...")
-        if self.config.build_dependency == "nodejs":
-            prepare_node_env(self.test_dir)
         replace_version_pragmas(self.test_dir)
 
     @on_local_test_dir
@@ -202,13 +169,6 @@ def parse_command_line(description: str, args: List[str]):
         default=Path("/usr/local/bin/solc"),
         help="""Path to solc or soljson.js binary""",
     )
-    arg_parser.add_argument(
-        "solcjs_src_dir",
-        metavar="solcjs-src-dir",
-        type=str,
-        default="",
-        help="""Solcjs source code directory""",
-    )
     return arg_parser.parse_args(args)
 
 
@@ -252,26 +212,6 @@ def get_solc_short_version(solc_full_version: str) -> str:
 
 def store_benchmark_report(self):
     raise NotImplementedError()
-
-
-def prepare_node_env(test_dir: Path):
-    if which("node") is None:
-        raise RuntimeError("nodejs not found.")
-    # Remove lock files (if they exist) to prevent them from overriding
-    # our changes in package.json
-    print("Removing package lock files...")
-    rmtree(test_dir / "yarn.lock", ignore_errors=True)
-    rmtree(test_dir / "package_lock.json", ignore_errors=True)
-
-    print("Disabling package.json hooks...")
-    package_json_path = test_dir / "package.json"
-    if not package_json_path.exists():
-        raise FileNotFoundError("package.json not found.")
-    package_json = package_json_path.read_text(encoding="utf-8")
-    package_json = re.sub(r'("prepublish":)\s".+"', lambda m: f'{m.group(1)} ""', package_json)
-    package_json = re.sub(r'("prepare":)\s".+"', lambda m: f'{m.group(1)} ""', package_json)
-    with open(package_json_path, "w", encoding="utf-8") as f:
-        f.write(package_json)
 
 
 def replace_version_pragmas(test_dir: Path):

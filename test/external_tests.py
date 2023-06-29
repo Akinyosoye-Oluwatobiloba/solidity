@@ -45,11 +45,11 @@ def display_available_external_tests(_):
     print(*detect_external_tests().keys())
 
 
-def run_test_scripts(solc_binary_type: str, solc_binary_path: Path, solcjs_src_dir: str, tests: dict):
+def run_test_scripts(solc_binary_type: str, solc_binary_path: Path, tests: dict):
     for test_name, test_script_path in tests.items():
         print(f"Running {test_name} external test...")
         subprocess.run(
-            [test_script_path, solc_binary_type, solc_binary_path, solcjs_src_dir],
+            [test_script_path, solc_binary_type, solc_binary_path],
             check=True
         )
 
@@ -57,13 +57,12 @@ def run_test_scripts(solc_binary_type: str, solc_binary_path: Path, solcjs_src_d
 def run_external_tests(args: dict):
     solc_binary_type = args["solc_binary_type"]
     solc_binary_path = args["solc_binary_path"]
-    solcjs_src_dir = args["solcjs_src_dir"]
 
     all_test_scripts = detect_external_tests()
     selected_tests = args["selected_tests"]
     if args["run_all"]:
         assert len(selected_tests) == 0
-        run_test_scripts(solc_binary_type, solc_binary_path, solcjs_src_dir, all_test_scripts)
+        run_test_scripts(solc_binary_type, solc_binary_path, all_test_scripts)
         return
 
     if len(selected_tests) == 0:
@@ -79,7 +78,6 @@ def run_external_tests(args: dict):
     run_test_scripts(
         solc_binary_type,
         solc_binary_path,
-        solcjs_src_dir,
         {k: all_test_scripts[k] for k in selected_tests},
     )
 
@@ -115,13 +113,6 @@ def parse_commandline() -> Namespace:
         type=Path,
         required=True,
         help="Path to the solidity compiler binary.",
-    )
-    run_command.add_argument(
-        "--solcjs-src-dir",
-        dest="solcjs_src_dir",
-        type=str,
-        default="",
-        help="""Solcjs source code directory""",
     )
 
     running_mode = run_command.add_mutually_exclusive_group()
