@@ -31,6 +31,7 @@ test_config = TestConfig(
     ref="main",
     build_dependency="rust",
     compile_only_presets=[
+        # pylint: disable=line-too-long
         # "ir-no-optimize", # Error: Yul exception:Variable expr_15841_address is 2 slot(s) too deep inside the stack. Stack too deep.
         # "ir-optimize-evm-only", # Error: Yul exception:Variable expr_15841_address is 2 slot(s) too deep inside the stack. Stack too deep.
     ],

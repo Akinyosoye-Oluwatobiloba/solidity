@@ -77,6 +77,7 @@ class FoundryRunner(TestRunner):
             yul=profile_fields["yul"],
         )
 
+    @TestRunner.on_local_test_dir
     def compiler_settings(self, presets: List[str]):
         """Configure forge tests profiles"""
 
@@ -106,6 +107,7 @@ class FoundryRunner(TestRunner):
 
         run_forge_command("forge install", self.env)
 
+    @TestRunner.on_local_test_dir
     def compile(self, preset: str):
         """Compile project"""
 
@@ -113,6 +115,7 @@ class FoundryRunner(TestRunner):
         self.env.update({"FOUNDRY_PROFILE": self.profile_name(preset)})
         run_forge_command("forge build", self.env)
 
+    @TestRunner.on_local_test_dir
     def run_test(self):
         """Run project tests"""
 
