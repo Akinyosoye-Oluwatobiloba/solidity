@@ -43,8 +43,8 @@ from common.git_helpers import git_commit_hash
 SOLC_FULL_VERSION_REGEX = re.compile(r"^[a-zA-Z: ]*(.*)$")
 SOLC_SHORT_VERSION_REGEX = re.compile(r"^([0-9.]+).*\+|\-$")
 
-evm = os.environ.get("DEFAULT_EVM")
-CURRENT_EVM_VERSION: str = evm if evm is not None else "shanghai"
+evm_version = os.environ.get("DEFAULT_EVM")
+CURRENT_EVM_VERSION: str = evm_version if evm_version is not None else "shanghai"
 
 AVAILABLE_PRESETS: List[str] = [
     "legacy-no-optimize",
@@ -109,6 +109,8 @@ class TestRunner(metaclass=ABCMeta):
                 copytree(self.solcjs_src_dir, solc_dir)
                 rmtree(solc_dir / "dist")
                 rmtree(solc_dir / "node_modules")
+            if which("npm") is None:
+                raise RuntimeError("NPM not found.")
             os.chdir(solc_dir)
             subprocess.run(["npm", "install"], check=True)
             subprocess.run(["npm", "run", "build"], check=True)
@@ -151,40 +153,23 @@ class TestRunner(metaclass=ABCMeta):
         rmtree(self.tmp_dir)
 
     @on_local_test_dir
-    def compiler_settings(self):
-        print(dedent(
-            f"""\
-            Configuring runner's profiles with:
-            -------------------------------------
-            Binary type: {self.solc_binary_type}
-            Compiler path: {self.solc_binary_path}
-            -------------------------------------
-            """
-        ))
+    def compiler_settings(self, _: List[str]):
+        # TODO: default to hardhat
+        raise NotImplementedError()
 
     @on_local_test_dir
-    def compile(self, solc_version: str, preset: str):
-        print("Running compile function...")
-        settings = settings_from_preset(preset, self.config.evm_version)
-        print(dedent(
-            f"""\
-            -------------------------------------
-            Settings preset: {preset}
-            Settings: {settings}
-            EVM version: {self.config.evm_version}
-            Compiler version: {get_solc_short_version(solc_version)}
-            Compiler version (full): {solc_version}
-            -------------------------------------
-            """
-        ))
+    def compile(self, _: str):
+        # TODO: default to hardhat
+        raise NotImplementedError()
 
     @on_local_test_dir
     def run_test(self):
-        pass
+        # TODO: default to hardhat
+        raise NotImplementedError()
 
 
 # Helper functions
-def compiler_settings(evm_version, via_ir="false", optimizer="false", yul="false") -> dict:
+def compiler_settings(evm_version: str, via_ir: str = "false", optimizer: str = "false", yul: str = "false") -> dict:
     return {
         "optimizer": {"enabled": optimizer, "details": {"yul": yul}},
         "evmVersion": evm_version,
@@ -331,9 +316,31 @@ def run_test(runner: TestRunner):
     runner.setup_environment()
 
     # Configure TestRunner instance
+    print(dedent(
+        f"""\
+        Configuring runner's profiles with:
+        -------------------------------------
+        Binary type: {runner.solc_binary_type}
+        Compiler path: {runner.solc_binary_path}
+        -------------------------------------
+        """
+    ))
     runner.compiler_settings(presets)
     for preset in runner.config.selected_presets():
-        runner.compile(solc_version, preset)
+        print("Running compile function...")
+        settings = settings_from_preset(preset, runner.config.evm_version)
+        print(dedent(
+            f"""\
+            -------------------------------------
+            Settings preset: {preset}
+            Settings: {settings}
+            EVM version: {runner.config.evm_version}
+            Compiler version: {get_solc_short_version(solc_version)}
+            Compiler version (full): {solc_version}
+            -------------------------------------
+            """
+        ))
+        runner.compile(preset)
         # TODO: COMPILE_ONLY should be a command-line option
         if (
             os.environ.get("COMPILE_ONLY") == "1"

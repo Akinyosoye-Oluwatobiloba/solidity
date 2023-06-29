@@ -78,7 +78,6 @@ class FoundryRunner(TestRunner):
 
     def compiler_settings(self, presets: List[str]):
         """Configure forge tests profiles"""
-        super().compiler_settings()
 
         profiles = []
         for preset in presets:
@@ -104,10 +103,9 @@ class FoundryRunner(TestRunner):
 
         run_forge_command("forge install", self.env)
 
-    def compile(self, solc_version: str, preset: str):
+    def compile(self, preset: str):
         """Compile project"""
 
-        super().compile(solc_version, preset)
         # Set the Foundry profile environment variable
         self.env.update({"FOUNDRY_PROFILE": self.profile_name(preset)})
         run_forge_command("forge build", self.env)
@@ -115,5 +113,4 @@ class FoundryRunner(TestRunner):
     def run_test(self):
         """Run project tests"""
 
-        super().run_test()
         run_forge_command("forge test --gas-report", self.env)
