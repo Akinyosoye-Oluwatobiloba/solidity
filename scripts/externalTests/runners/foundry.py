@@ -33,7 +33,7 @@ from typing import Optional, List
 PROJECT_ROOT = Path(__file__).parents[3]
 sys.path.insert(0, f"{PROJECT_ROOT}/scripts/externalTests")
 
-from common import settings_from_preset, TestRunner
+from test_helpers import settings_from_preset, TestRunner
 
 def run_forge_command(command: str, env: Optional[dict] = None):
     subprocess.run(

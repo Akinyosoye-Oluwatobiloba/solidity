@@ -27,7 +27,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parents[2]
 sys.path.insert(0, f"{PROJECT_ROOT}/scripts/externalTests")
 
-from common import run_test, TestConfig
+from test_helpers import run_test, TestConfig
 from runners.foundry import FoundryRunner
 
 test_config = TestConfig(
