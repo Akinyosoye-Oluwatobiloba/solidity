@@ -183,7 +183,7 @@ def download_project(test_dir: Path, repo_url: str, ref_type: str = "branch", re
         subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], check=True)
     else:
         os.chdir(test_dir.parent)
-        subprocess.run(["git", "clone", "--depth", "1", repo_url, "-b", ref, test_dir.resolve()], check=True)
+        subprocess.run(["git", "clone", "--no-progress", "--depth", "1", repo_url, "-b", ref, test_dir.resolve()], check=True)
         if not test_dir.exists():
             raise RuntimeError("Failed to clone the project.")
         os.chdir(test_dir)
