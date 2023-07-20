@@ -65,14 +65,7 @@ class FoundryRunner(TestRunner):
 
             [profile.{name}.optimizer_details]
             yul = {yul}
-        """).format(
-            name=profile_fields["name"],
-            solc=profile_fields["solc"],
-            evm_version=profile_fields["evm_version"],
-            optimizer=profile_fields["optimizer"],
-            via_ir=profile_fields["via_ir"],
-            yul=profile_fields["yul"],
-        )
+        """).format(**profile_fields)
 
     @TestRunner.on_local_test_dir
     def configure(self, presets: List[SettingsPreset]):
@@ -81,18 +74,14 @@ class FoundryRunner(TestRunner):
         profiles = []
         for preset in presets:
             settings = settings_from_preset(preset, self.config.evm_version)
-            profiles.append(
-                self.profile_section(
-                    {
-                        "name": self.profile_name(preset),
-                        "solc": self.solc_binary_path,
-                        "evm_version": self.config.evm_version,
-                        "optimizer": str(settings["optimizer"]["enabled"]).lower(),
-                        "via_ir": str(settings["viaIR"]).lower(),
-                        "yul": str(settings["optimizer"]["details"]["yul"]).lower(),
-                    }
-                )
-            )
+            profiles.append(self.profile_section({
+                "name": self.profile_name(preset),
+                "solc": self.solc_binary_path,
+                "evm_version": self.config.evm_version,
+                "optimizer": str(settings["optimizer"]["enabled"]).lower(),
+                "via_ir": str(settings["viaIR"]).lower(),
+                "yul": str(settings["optimizer"]["details"]["yul"]).lower(),
+            }))
 
         with open(
             file=self.test_dir / self.foundry_config_file,
