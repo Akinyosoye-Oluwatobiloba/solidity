@@ -77,7 +77,7 @@ vector<StringPair> ASTPropertyTest::readKeyValuePairs(string const& _input)
 			pair.emplace_back(boost::trim_copy(element));
 		}
 
-		soltestAssert(pair.size() == 2);
+		soltestAssert(pair.size() == 2, "Invalid property test: " + line);
 		result.emplace_back(pair[0], pair[1]);
 	}
 	return result;
@@ -140,8 +140,11 @@ void ASTPropertyTest::readTestedProperties(Json::Value const& _astJson)
 
 				soltestAssert(node.isMember("nodeType"));
 				optional<Json::Value> propertyNode = findNode(node, testedProperty);
-				soltestAssert(propertyNode.has_value(), "Could not find AST property "s + testedProperty);
-				soltestAssert(!propertyNode->isObject());
+				soltestAssert(
+					propertyNode.has_value(),
+					node["nodeType"].asString() + " node does not have a property named \""s + testedProperty + "\""
+				);
+				soltestAssert(!propertyNode->isObject(), "Property \"" + testedProperty + "\" is an object.");
 				m_testCases[testId].obtainedValue = propertyNode->asString();
 			}
 
