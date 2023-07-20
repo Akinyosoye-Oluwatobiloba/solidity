@@ -21,17 +21,10 @@
 
 import os
 import re
-import sys
 import subprocess
-from pathlib import Path
 from shutil import which
 from textwrap import dedent
 from typing import Optional, List
-
-# Our scripts/ is not a proper Python package so we need to modify PYTHONPATH to import from it
-# pragma pylint: disable=import-error,wrong-import-position
-PROJECT_ROOT = Path(__file__).parents[3]
-sys.path.insert(0, f"{PROJECT_ROOT}/scripts/externalTests")
 
 from test_helpers import settings_from_preset, TestRunner
 
