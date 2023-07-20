@@ -165,7 +165,7 @@ def parse_command_line(description: str, args: List[str]):
         metavar="solc-binary-path",
         type=Path,
         default=Path("/usr/local/bin/solc"),
-        help="""Path to solc or soljson.js binary""",
+        help="""Path to solc binary""",
     )
     return arg_parser.parse_args(args)
 
