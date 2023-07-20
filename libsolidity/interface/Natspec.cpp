@@ -82,12 +82,6 @@ Json::Value Natspec::userDocumentation(ContractDefinition const& _contractDef)
 	{
 		ContractDefinition const* eventOrigin = event->annotation().contract;
 		solAssert(eventOrigin);
-		solAssert(
-			*eventOrigin == _contractDef ||
-			(!eventOrigin->isLibrary() && _contractDef.derivesFrom(*eventOrigin)) ||
-			(eventOrigin->isLibrary() && !_contractDef.derivesFrom(*eventOrigin))
-		);
-
 		string value = extractDoc(event->annotation().docTags, "notice");
 		if (!value.empty())
 			doc["events"][event->functionType(true)->externalSignature()]["notice"] = value;
@@ -181,11 +175,6 @@ Json::Value Natspec::devDocumentation(ContractDefinition const& _contractDef)
 		{
 			ContractDefinition const* eventOrigin = event->annotation().contract;
 			solAssert(eventOrigin);
-			solAssert(
-				*eventOrigin == _contractDef ||
-				(!eventOrigin->isLibrary() && _contractDef.derivesFrom(*eventOrigin)) ||
-				(eventOrigin->isLibrary() && !_contractDef.derivesFrom(*eventOrigin))
-			);
 			doc["events"][event->functionType(true)->externalSignature()] = devDoc;
 		}
 	for (auto const& error: _contractDef.interfaceErrors())

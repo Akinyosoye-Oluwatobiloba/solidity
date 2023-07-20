@@ -1,0 +1,12 @@
+
+======= event_from_another_contract_userdoc_devdoc/input.sol:C =======
+Developer Documentation
+{"events":{"E()":{"details":"E event"}},"kind":"dev","methods":{},"version":1}
+User Documentation
+{"events":{"E()":{"notice":"E event"}},"kind":"user","methods":{},"version":1}
+
+======= event_from_another_contract_userdoc_devdoc/input.sol:X =======
+Developer Documentation
+{"events":{"E()":{"details":"E event"}},"kind":"dev","methods":{},"version":1}
+User Documentation
+{"events":{"E()":{"notice":"E event"}},"kind":"user","methods":{},"version":1}

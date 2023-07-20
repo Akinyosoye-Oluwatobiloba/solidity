@@ -485,6 +485,55 @@ BOOST_AUTO_TEST_CASE(event)
 	checkNatspec(sourceCode, "ERC20", userDoc, true);
 }
 
+BOOST_AUTO_TEST_CASE(emit_event_from_another_contract)
+{
+	char const* sourceCode = R"(
+		contract X {
+			/// @notice E event
+			/// @dev E event
+			event E();
+		}
+
+		contract C {
+			function g() public {
+				emit X.E();
+			}
+		}
+	)";
+
+	char const* devDoc = R"ABCDEF(
+	{
+		"events":
+		{
+			"E()":
+			{
+				"details": "E event"
+			}
+		},
+		"kind": "dev",
+		"methods": {},
+		"version": 1
+	}
+	)ABCDEF";
+	checkNatspec(sourceCode, "C", devDoc, false);
+
+	char const* userDoc = R"ABCDEF(
+	{
+		"events":
+		{
+			"E()":
+			{
+				"notice": "E event"
+			}
+		},
+		"kind": "user",
+		"methods": {},
+		"version": 1
+	}
+	)ABCDEF";
+	checkNatspec(sourceCode, "C", userDoc, true);
+}
+
 BOOST_AUTO_TEST_CASE(emit_same_signature_event_library_contract)
 {
 	char const* sourceCode = R"(

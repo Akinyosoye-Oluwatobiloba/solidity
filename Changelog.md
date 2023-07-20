@@ -7,6 +7,7 @@ Compiler Features:
 
 
 Bugfixes:
+ * NatSpec: Fix failed assertion when requesting userdoc or devdoc for contracts that emit events from other contracts.
 
 
 ### 0.8.21 (2023-07-19)
