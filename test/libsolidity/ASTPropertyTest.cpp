@@ -133,7 +133,7 @@ void ASTPropertyTest::readTestedProperties(Json::Value const& _astJson)
 				soltestAssert(!nodeDocstring.empty());
 
 				vector<StringPair> pairs = readKeyValuePairs(nodeDocstring);
-				soltestAssert(!pairs.empty());
+				soltestAssert(pairs.size() == 1, "Only one property test per AST node allowed.");
 
 				auto const& [testId, testedProperty] = pairs[0];
 				m_testCases[testId].property = testedProperty;
