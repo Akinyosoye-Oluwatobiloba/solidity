@@ -42,7 +42,7 @@ ASTPropertyTest::ASTPropertyTest(string const& _filename):
 	TestCase(_filename)
 {
 	if (!boost::algorithm::ends_with(_filename, ".sol"))
-		BOOST_THROW_EXCEPTION(runtime_error("Invalid test contract file name: \"" + _filename + "\"."));
+		BOOST_THROW_EXCEPTION(runtime_error("Not a Solidity file: \"" + _filename + "\"."));
 
 	m_source = m_reader.source();
 	readExpectations();
