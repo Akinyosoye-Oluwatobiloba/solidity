@@ -115,12 +115,12 @@ class TestRunner(metaclass=ABCMeta):
         rmtree(self.tmp_dir)
 
     @on_local_test_dir
-    def compiler_settings(self, _: List[SettingsPreset]):
+    def compiler_settings(self, presets: List[SettingsPreset]):
         # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
     @on_local_test_dir
-    def compile(self, _: SettingsPreset):
+    def compile(self, preset: SettingsPreset):
         # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
