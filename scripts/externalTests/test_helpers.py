@@ -23,7 +23,7 @@ import os
 import re
 import subprocess
 import sys
-from abc import ABCMeta
+from abc import abstractmethod, ABCMeta
 from argparse import ArgumentParser
 from dataclasses import dataclass, field
 from enum import Enum
@@ -115,16 +115,19 @@ class TestRunner(metaclass=ABCMeta):
         rmtree(self.tmp_dir)
 
     @on_local_test_dir
+    @abstractmethod
     def configure(self, presets: List[SettingsPreset]):
         # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
     @on_local_test_dir
+    @abstractmethod
     def compile(self, preset: SettingsPreset):
         # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
     @on_local_test_dir
+    @abstractmethod
     def run_test(self):
         # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
