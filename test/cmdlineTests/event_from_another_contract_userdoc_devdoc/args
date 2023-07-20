@@ -1,1 +1,1 @@
---userdoc --devdoc
+--userdoc --devdoc --pretty-json --json-indent 4
