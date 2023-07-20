@@ -87,9 +87,9 @@ class FoundryRunner(TestRunner):
                         "name": self.profile_name(preset),
                         "solc": self.solc_binary_path,
                         "evm_version": self.config.evm_version,
-                        "optimizer": settings["optimizer"]["enabled"],
-                        "via_ir": settings["viaIR"],
-                        "yul": settings["optimizer"]["details"]["yul"],
+                        "optimizer": str(settings["optimizer"]["enabled"]).lower(),
+                        "via_ir": str(settings["viaIR"]).lower(),
+                        "yul": str(settings["optimizer"]["details"]["yul"]).lower(),
                     }
                 )
             )

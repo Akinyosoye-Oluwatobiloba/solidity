@@ -131,7 +131,7 @@ class TestRunner(metaclass=ABCMeta):
 
 
 # Helper functions
-def compiler_settings(evm_version: str, via_ir: str = "false", optimizer: str = "false", yul: str = "false") -> dict:
+def compiler_settings(evm_version: str, via_ir: bool = False, optimizer: bool = False, yul: bool = False) -> dict:
     return {
         "optimizer": {"enabled": optimizer, "details": {"yul": yul}},
         "evmVersion": evm_version,
@@ -142,11 +142,11 @@ def compiler_settings(evm_version: str, via_ir: str = "false", optimizer: str = 
 def settings_from_preset(preset: SettingsPreset, evm_version: str) -> dict:
     return {
         SettingsPreset.LEGACY_NO_OPTIMIZE:       compiler_settings(evm_version),
-        SettingsPreset.IR_NO_OPTIMIZE:           compiler_settings(evm_version, via_ir="true"),
-        SettingsPreset.LEGACY_OPTIMIZE_EVM_ONLY: compiler_settings(evm_version, optimizer="true"),
-        SettingsPreset.IR_OPTIMIZE_EVM_ONLY:     compiler_settings(evm_version, via_ir="true", optimizer="true"),
-        SettingsPreset.LEGACY_OPTIMIZE_EVM_YUL:  compiler_settings(evm_version, optimizer="true", yul="true"),
-        SettingsPreset.IR_OPTIMIZE_EVM_YUL:      compiler_settings(evm_version, via_ir="true", optimizer="true", yul="true"),
+        SettingsPreset.IR_NO_OPTIMIZE:           compiler_settings(evm_version, via_ir=True),
+        SettingsPreset.LEGACY_OPTIMIZE_EVM_ONLY: compiler_settings(evm_version, optimizer=True),
+        SettingsPreset.IR_OPTIMIZE_EVM_ONLY:     compiler_settings(evm_version, via_ir=True, optimizer=True),
+        SettingsPreset.LEGACY_OPTIMIZE_EVM_YUL:  compiler_settings(evm_version, optimizer=True, yul=True),
+        SettingsPreset.IR_OPTIMIZE_EVM_YUL:      compiler_settings(evm_version, via_ir=True, optimizer=True, yul=True),
     }[preset]
 
 
