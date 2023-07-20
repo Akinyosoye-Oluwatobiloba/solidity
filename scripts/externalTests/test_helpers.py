@@ -242,24 +242,18 @@ def run_test(runner: TestRunner):
     runner.setup_environment()
 
     # Configure TestRunner instance
-    print(
-        dedent(
-            f"""\
+    print(dedent(f"""\
         Configuring runner's profiles with:
         -------------------------------------
         Binary type: {runner.solc_binary_type}
         Compiler path: {runner.solc_binary_path}
         -------------------------------------
-        """
-        )
-    )
+    """))
     runner.compiler_settings(presets)
     for preset in runner.config.selected_presets():
         print("Running compile function...")
         settings = settings_from_preset(preset, runner.config.evm_version)
-        print(
-            dedent(
-                f"""\
+        print(dedent(f"""\
             -------------------------------------
             Settings preset: {preset.value}
             Settings: {settings}
@@ -267,9 +261,7 @@ def run_test(runner: TestRunner):
             Compiler version: {get_solc_short_version(solc_version)}
             Compiler version (full): {solc_version}
             -------------------------------------
-            """
-            )
-        )
+        """))
         runner.compile(preset)
         # TODO: COMPILE_ONLY should be a command-line option # pylint: disable=fixme
         if os.environ.get("COMPILE_ONLY") == "1" or preset in runner.config.compile_only_presets:

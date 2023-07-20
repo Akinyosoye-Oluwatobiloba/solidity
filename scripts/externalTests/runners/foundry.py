@@ -54,8 +54,7 @@ class FoundryRunner(TestRunner):
 
     @staticmethod
     def profile_section(profile_fields: dict) -> str:
-        return dedent(
-            """\
+        return dedent("""\
             [profile.{name}]
             gas_reports = ["*"]
             auto_detect_solc = false
@@ -66,8 +65,7 @@ class FoundryRunner(TestRunner):
 
             [profile.{name}.optimizer_details]
             yul = {yul}
-            """
-        ).format(
+        """).format(
             name=profile_fields["name"],
             solc=profile_fields["solc"],
             evm_version=profile_fields["evm_version"],
