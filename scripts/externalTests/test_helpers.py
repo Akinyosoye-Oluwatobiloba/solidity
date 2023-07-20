@@ -115,7 +115,7 @@ class TestRunner(metaclass=ABCMeta):
         rmtree(self.tmp_dir)
 
     @on_local_test_dir
-    def compiler_settings(self, presets: List[SettingsPreset]):
+    def configure(self, presets: List[SettingsPreset]):
         # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
@@ -249,7 +249,7 @@ def run_test(runner: TestRunner):
         Compiler path: {runner.solc_binary_path}
         -------------------------------------
     """))
-    runner.compiler_settings(presets)
+    runner.configure(presets)
     for preset in runner.config.selected_presets():
         print("Running compile function...")
         settings = settings_from_preset(preset, runner.config.evm_version)

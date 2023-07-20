@@ -75,7 +75,7 @@ class FoundryRunner(TestRunner):
         )
 
     @TestRunner.on_local_test_dir
-    def compiler_settings(self, presets: List[SettingsPreset]):
+    def configure(self, presets: List[SettingsPreset]):
         """Configure forge tests profiles"""
 
         profiles = []
