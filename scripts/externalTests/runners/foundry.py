@@ -26,7 +26,7 @@ from shutil import which
 from textwrap import dedent
 from typing import Optional, List
 
-from test_helpers import settings_from_preset, TestRunner
+from test_helpers import settings_from_preset, SettingsPreset, TestRunner
 
 def run_forge_command(command: str, env: Optional[dict] = None):
     subprocess.run(
@@ -47,10 +47,10 @@ class FoundryRunner(TestRunner):
             raise RuntimeError("Forge not found.")
 
     @staticmethod
-    def profile_name(preset: str):
+    def profile_name(preset: SettingsPreset):
         """Returns foundry profile name"""
         # Replace - or + by underscore to avoid invalid toml syntax
-        return re.sub(r"(\-|\+)+", "_", preset)
+        return re.sub(r"(\-|\+)+", "_", preset.value)
 
     @staticmethod
     def profile_section(profile_fields: dict) -> str:
@@ -77,7 +77,7 @@ class FoundryRunner(TestRunner):
         )
 
     @TestRunner.on_local_test_dir
-    def compiler_settings(self, presets: List[str]):
+    def compiler_settings(self, presets: List[SettingsPreset]):
         """Configure forge tests profiles"""
 
         profiles = []
@@ -107,7 +107,7 @@ class FoundryRunner(TestRunner):
         run_forge_command("forge install", self.env)
 
     @TestRunner.on_local_test_dir
-    def compile(self, preset: str):
+    def compile(self, preset: SettingsPreset):
         """Compile project"""
 
         # Set the Foundry profile environment variable

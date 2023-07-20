@@ -27,7 +27,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parents[2]
 sys.path.insert(0, f"{PROJECT_ROOT}/scripts/externalTests")
 
-from test_helpers import run_test, TestConfig
+from test_helpers import run_test, SettingsPreset, TestConfig
 from runners.foundry import FoundryRunner
 
 test_config = TestConfig(
@@ -38,14 +38,14 @@ test_config = TestConfig(
     build_dependency="rust",
     compile_only_presets=[
         # pylint: disable=line-too-long
-        # "ir-no-optimize", # Error: Yul exception:Variable expr_15841_address is 2 slot(s) too deep inside the stack. Stack too deep.
-        # "ir-optimize-evm-only", # Error: Yul exception:Variable expr_15841_address is 2 slot(s) too deep inside the stack. Stack too deep.
+        SettingsPreset.LEGACY_NO_OPTIMIZE, # Error: Yul exception:Variable expr_15841_address is 2 slot(s) too deep inside the stack. Stack too deep.
+        SettingsPreset.IR_NO_OPTIMIZE,     # Error: Yul exception:Variable expr_15841_address is 2 slot(s) too deep inside the stack. Stack too deep.
     ],
     settings_presets=[
-        "ir-optimize-evm+yul",
-        "legacy-optimize-evm-only",
-        "legacy-optimize-evm+yul",
-        "legacy-no-optimize",
+        SettingsPreset.LEGACY_OPTIMIZE_EVM_ONLY,
+        SettingsPreset.IR_OPTIMIZE_EVM_ONLY,
+        SettingsPreset.LEGACY_OPTIMIZE_EVM_YUL,
+        SettingsPreset.IR_OPTIMIZE_EVM_YUL,
     ],
 )
 

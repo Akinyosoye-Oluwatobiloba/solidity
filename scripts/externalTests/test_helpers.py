@@ -26,11 +26,12 @@ import sys
 from abc import ABCMeta
 from argparse import ArgumentParser
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 from textwrap import dedent
-from typing import List
+from typing import List, Set
 
 # Our scripts/ is not a proper Python package so we need to modify PYTHONPATH to import from it
 # pragma pylint: disable=import-error,wrong-import-position
@@ -45,14 +46,14 @@ SOLC_SHORT_VERSION_REGEX = re.compile(r"^([0-9.]+).*\+|\-$")
 evm_version = os.environ.get("DEFAULT_EVM")
 CURRENT_EVM_VERSION: str = evm_version if evm_version is not None else "shanghai"
 
-AVAILABLE_PRESETS: List[str] = [
-    "legacy-no-optimize",
-    "ir-no-optimize",
-    "legacy-optimize-evm-only",
-    "ir-optimize-evm-only",
-    "legacy-optimize-evm+yul",
-    "ir-optimize-evm+yul",
-]
+
+class SettingsPreset(Enum):
+    LEGACY_NO_OPTIMIZE = 'legacy-no-optimize'
+    IR_NO_OPTIMIZE = 'ir-no-optimize'
+    LEGACY_OPTIMIZE_EVM_ONLY = 'legacy-optimize-evm-only'
+    IR_OPTIMIZE_EVM_ONLY = 'ir-optimize-evm-only'
+    LEGACY_OPTIMIZE_EVM_YUL = 'legacy-optimize-evm+yul'
+    IR_OPTIMIZE_EVM_YUL = 'ir-optimize-evm+yul'
 
 
 @dataclass
@@ -62,11 +63,11 @@ class TestConfig:
     ref_type: str
     ref: str
     build_dependency: str = field(default="nodejs")
-    compile_only_presets: List[str] = field(default_factory=list)
-    settings_presets: List[str] = field(default_factory=lambda: AVAILABLE_PRESETS)
+    compile_only_presets: List[SettingsPreset] = field(default_factory=list)
+    settings_presets: List[SettingsPreset] = field(default_factory=lambda: list(SettingsPreset))
     evm_version: str = field(default=CURRENT_EVM_VERSION)
 
-    def selected_presets(self):
+    def selected_presets(self) -> Set[SettingsPreset]:
         return set(self.compile_only_presets + self.settings_presets)
 
 
@@ -114,12 +115,12 @@ class TestRunner(metaclass=ABCMeta):
         rmtree(self.tmp_dir)
 
     @on_local_test_dir
-    def compiler_settings(self, _: List[str]):
+    def compiler_settings(self, _: List[SettingsPreset]):
         # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
     @on_local_test_dir
-    def compile(self, _: str):
+    def compile(self, _: SettingsPreset):
         # TODO: default to hardhat # pylint: disable=fixme
         raise NotImplementedError()
 
@@ -138,18 +139,15 @@ def compiler_settings(evm_version: str, via_ir: str = "false", optimizer: str = 
     }
 
 
-def settings_from_preset(preset: str, evm_version: str) -> dict:
-    assert preset in AVAILABLE_PRESETS
-    switch = {
-        "legacy-no-optimize": compiler_settings(evm_version),
-        "ir-no-optimize": compiler_settings(evm_version, via_ir="true"),
-        "legacy-optimize-evm-only": compiler_settings(evm_version, optimizer="true"),
-        "ir-optimize-evm-only": compiler_settings(evm_version, via_ir="true", optimizer="true"),
-        "legacy-optimize-evm+yul": compiler_settings(evm_version, optimizer="true", yul="true"),
-        "ir-optimize-evm+yul": compiler_settings(evm_version, via_ir="true", optimizer="true", yul="true"),
-    }
-    assert preset in switch
-    return switch[preset]
+def settings_from_preset(preset: SettingsPreset, evm_version: str) -> dict:
+    return {
+        SettingsPreset.LEGACY_NO_OPTIMIZE:       compiler_settings(evm_version),
+        SettingsPreset.IR_NO_OPTIMIZE:           compiler_settings(evm_version, via_ir="true"),
+        SettingsPreset.LEGACY_OPTIMIZE_EVM_ONLY: compiler_settings(evm_version, optimizer="true"),
+        SettingsPreset.IR_OPTIMIZE_EVM_ONLY:     compiler_settings(evm_version, via_ir="true", optimizer="true"),
+        SettingsPreset.LEGACY_OPTIMIZE_EVM_YUL:  compiler_settings(evm_version, optimizer="true", yul="true"),
+        SettingsPreset.IR_OPTIMIZE_EVM_YUL:      compiler_settings(evm_version, via_ir="true", optimizer="true", yul="true"),
+    }[preset]
 
 
 def parse_command_line(description: str, args: List[str]):
@@ -231,7 +229,7 @@ def run_test(runner: TestRunner):
     print(f"Testing {runner.config.name}...\n===========================")
 
     presets = runner.config.selected_presets()
-    print(f"Selected settings presets: {' '.join(presets)}")
+    print(f"Selected settings presets: {' '.join(p.value for p in presets)}")
 
     # Configure solc compiler
     solc_version = runner.setup_solc()
@@ -263,7 +261,7 @@ def run_test(runner: TestRunner):
             dedent(
                 f"""\
             -------------------------------------
-            Settings preset: {preset}
+            Settings preset: {preset.value}
             Settings: {settings}
             EVM version: {runner.config.evm_version}
             Compiler version: {get_solc_short_version(solc_version)}
