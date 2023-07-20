@@ -51,7 +51,7 @@ ASTPropertyTest::ASTPropertyTest(string const& _filename):
 void ASTPropertyTest::generateTestCaseValues(string& _values, bool _obtained)
 {
 	_values.clear();
-	for (auto testId: m_expectationsSequence)
+	for (string const& testId: m_expectationsSequence)
 	{
 		soltestAssert(m_testCases.count(testId) > 0);
 		_values +=
@@ -110,38 +110,40 @@ void ASTPropertyTest::readTestedProperties(Json::Value const& _astJson)
 {
 	queue<Json::Value> nodesToVisit;
 	nodesToVisit.push(_astJson);
-	string documentation = "documentation";
-	string testCaseLine;
 
-	while(!nodesToVisit.empty())
+	while (!nodesToVisit.empty())
 	{
-		auto& node = nodesToVisit.front();
-		if (node.isObject())
-		{
-			for (auto memberName: node.getMemberNames())
-				if (memberName == documentation)
-				{
-					auto docNode = node[documentation];
-					testCaseLine = docNode.isObject() ?
-						docNode["text"].asString() :
-						docNode.asString();
+		Json::Value& node = nodesToVisit.front();
 
-					soltestAssert(!testCaseLine.empty());
-					auto pairs = readKeyValuePairs(testCaseLine);
-					soltestAssert(!pairs.empty());
-					auto [testId, testedProperty] = pairs[0];
-					m_testCases[testId].property = testedProperty;
-					auto propertyNode = findNode(node, testedProperty);
-					soltestAssert(propertyNode.has_value(), "Could not find "s + testedProperty);
-					soltestAssert(!propertyNode->isObject());
-					m_testCases[testId].obtainedValue = propertyNode->asString();
-				}
-				else
-					nodesToVisit.push(node[memberName]);
-		}
-		else if (node.isArray())
+		if (node.isArray())
 			for (auto&& member: node)
 				nodesToVisit.push(member);
+		else if (node.isObject())
+			for (string const& memberName: node.getMemberNames())
+			{
+				if (memberName != "documentation")
+				{
+					nodesToVisit.push(node[memberName]);
+					continue;
+				}
+
+				string nodeDocstring = node["documentation"].isObject() ?
+					node["documentation"]["text"].asString() :
+					node["documentation"].asString();
+				soltestAssert(!nodeDocstring.empty());
+
+				vector<StringPair> pairs = readKeyValuePairs(nodeDocstring);
+				soltestAssert(!pairs.empty());
+
+				auto const& [testId, testedProperty] = pairs[0];
+				m_testCases[testId].property = testedProperty;
+
+				soltestAssert(node.isMember("nodeType"));
+				optional<Json::Value> propertyNode = findNode(node, testedProperty);
+				soltestAssert(propertyNode.has_value(), "Could not find AST property "s + testedProperty);
+				soltestAssert(!propertyNode->isObject());
+				m_testCases[testId].obtainedValue = propertyNode->asString();
+			}
 
 		nodesToVisit.pop();
 	}
