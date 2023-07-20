@@ -39,7 +39,7 @@ def run_forge_command(command: str, env: Optional[dict] = None):
 class FoundryRunner(TestRunner):
     """Configure and run Foundry-based projects"""
 
-    foundry_config_file = "foundry.toml"
+    FOUNDRY_CONFIG_FILE = "foundry.toml"
 
     def setup_environment(self):
         super().setup_environment()
@@ -84,7 +84,7 @@ class FoundryRunner(TestRunner):
             }))
 
         with open(
-            file=self.test_dir / self.foundry_config_file,
+            file=self.test_dir / self.FOUNDRY_CONFIG_FILE,
             mode="a",
             encoding="utf-8",
         ) as f:
